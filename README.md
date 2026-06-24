@@ -16,8 +16,6 @@ Das Smart Home soll folgende Aspekte berücksichtigen:
 
 - Raumbelegung verfolgen
 - Maximale Personenzahl in Räumen
-- Automatische Besucherzählung
-- Alarm, wenn sich Personen in gesperrten Bereichen befinden
 
 - Notfallmodus: Bei Feuer werden alle Türen entriegelt, Bei Einbruch werden bestimmte Türen verriegelt
 - Mehrstufige Authentifizierung: Raum nur mit Karte + PIN zugänglich
