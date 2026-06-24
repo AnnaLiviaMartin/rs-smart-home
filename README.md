@@ -6,27 +6,29 @@ Dieses Projekt untersucht die formale Modellierung und Verifikation eines Smart-
 - Zutritts- und Zugriffskontrolle
 - Wetter- und Umweltsensorik
 
-Zur Modellierung und Analyse wird **Alloy 6** und **Lean 4** verwendet.
+Zur Modellierung und Analyse werden **Alloy 6** und **Lean 4** verwendet.
 
 ## Ziele
 
 Das Smart Home soll folgende Aspekte berücksichtigen:
 
-### Schwerpunkt 1: Anwesenheitserkennung & Zugriffskontrolle
+### Schwerpunkt 1: Anwesenheitserkennung & Zutrittskontrolle
 
-- Personen bewegen sich zwischen Räumen.
-- Räume können eingeschränkt zugänglich sein.
-- Zutritt erfolgt über unterschiedliche Authentifizierungsmechanismen.
-- Berechtigungen können dauerhaft oder zeitlich begrenzt sein.
-- Gäste erhalten temporäre Zugangsrechte.
-- Unbefugter Zutritt soll erkannt werden.
+- Raumbelegung verfolgen
+- Maximale Personenzahl in Räumen
+- Automatische Besucherzählung
+- Alarm, wenn sich Personen in gesperrten Bereichen befinden
+
+- Notfallmodus: Bei Feuer werden alle Türen entriegelt, Bei Einbruch werden bestimmte Türen verriegelt
+- Mehrstufige Authentifizierung: Raum nur mit Karte + PIN zugänglich
+- Temporäre Berechtigungen: Gastzugang für 24 Stunden
 
 ### Schwerpunkt 2: Wetter- und Umweltsensoren
 
-- Regen schließt Dachfenster.
-- Hohe Windstärke fährt Markisen ein.
-- Hohe Temperaturen schließen Rollläden.
-- Schlechte Luftqualität aktiviert Lüftungssysteme.
+- Regen → Dachfenster schließen
+- Hohe Windstärke → Markise einfahren
+- Hohe Temperatur → Rollläden schließen
+- Schlechte Luftqualität → Lüftung aktivieren
 
 ## Projektstruktur
 
@@ -38,11 +40,9 @@ project/
 │
 ├── alloy/
 │   ├── smart_home.als
-│   └── scenarios.als
 │
 ├── lean/
 │   ├── SmartHome.lean
-│   └── Proofs.lean
 │
 └── docs/
     └── diagrams/
