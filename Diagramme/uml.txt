@@ -1,0 +1,160 @@
+@startuml SmartHome
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 13
+skinparam packageStyle rectangle
+
+package "Core" {
+    class SmartHome {
+        +String name
+        +EmergencyMode emergencyMode
+        +activate()
+        +deactivate()
+    }
+
+    class Room {
+        +String roomId
+        +String name
+        +int maxCapacity
+        +int currentOccupancy
+        +boolean isRestricted
+        +boolean isLocked
+        +updateOccupancy()
+        +triggerAlarm()
+    }
+
+    class Door {
+        +String doorId
+        +boolean isLocked
+        +boolean requiresCard
+        +boolean requiresPIN
+        +lock()
+        +unlock()
+        +checkAccess()
+    }
+}
+
+package "Access Control" {
+    class Person {
+        +String personId
+        +String name
+        +AccessLevel accessLevel
+        +boolean hasCard
+        +boolean hasValidPIN
+        +Date guestAccessExpiry
+    }
+
+    class AuthModule {
+        +verifyCard(Person): boolean
+        +verifyPIN(Person): boolean
+        +grantAccess(Person, Room): boolean
+        +createGuestAccess(Person, int hours): void
+    }
+
+    enum AccessLevel {
+        OWNER
+        RESIDENT
+        GUEST
+        NONE
+    }
+}
+
+package "Emergency" {
+    class EmergencyController {
+        +EmergencyMode mode
+        +handleFire()
+        +handleBurglary()
+        +resetEmergency()
+    }
+
+    enum EmergencyMode {
+        NORMAL
+        FIRE
+        BURGLARY
+    }
+}
+
+package "Sensors & Actuators" {
+    abstract class Sensor {
+        +String sensorId
+        +String type
+        +float currentValue
+        +String unit
+        +readValue(): float
+        +triggerAction(): void
+    }
+
+    class WeatherSensor {
+        +float rainLevel
+        +float windSpeed
+        +float temperature
+        +float airQuality
+        +checkConditions(): void
+    }
+
+    class OccupancySensor {
+        +int detectedPersons
+        +countPersons(): int
+    }
+
+    class Actuator {
+        +String actuatorId
+        +String type
+        +boolean isActive
+        +activate(): void
+        +deactivate(): void
+    }
+
+    class RuleEngine {
+        +List~Rule~ rules
+        +evaluateWeather(): void
+        +evaluateAccess(): void
+        +evaluateEmergency(): void
+        +applyRule(Rule): void
+    }
+}
+
+' ── Relationships ──────────────────────────────
+
+SmartHome "1" *-- "1..*" Room           : contains
+SmartHome "1" *-- "1"    RuleEngine     : uses
+SmartHome "1" *-- "1"    EmergencyController : has
+
+Room "1" o-- "0..*" Door                : has
+Room "1" o-- "0..*" Person              : occupiedBy
+Room "1" o-- "0..*" Sensor              : monitors
+Room "1" o-- "0..*" Actuator            : controls
+
+Door "1" --> "1" AuthModule             : uses
+AuthModule "1" --> "0..*" Person        : authenticates
+Person --> AccessLevel                  : hasLevel
+
+WeatherSensor  --|> Sensor              : extends
+OccupancySensor --|> Sensor             : extends
+
+EmergencyController --> EmergencyMode   : uses
+EmergencyController "1" --> "0..*" Door : controls
+
+RuleEngine "1" --> "0..*" Sensor        : reads
+RuleEngine "1" --> "0..*" Actuator      : triggers
+
+' ── Weather Rules (Notes) ──────────────────────
+
+note right of WeatherSensor
+  Regen      → Dachfenster schließen
+  Windstärke → Markise einfahren
+  Temperatur → Rollläden schließen
+  Luftqualität → Lüftung aktivieren
+end note
+
+note right of EmergencyController
+  FIRE     → alle Türen entriegeln
+  BURGLARY → bestimmte Türen verriegeln
+end note
+
+note right of AuthModule
+  Mehrstufig: Karte + PIN
+  Gastzugang: 24h temporär
+end note
+
+@enduml
