@@ -70,8 +70,6 @@ oder
 check PropertyName
 ```
 
----
-
 ## Lean ausführen
 
 Projekt bauen:
@@ -85,8 +83,6 @@ Einzelne Datei prüfen:
 ```bash
 lean SmartHome.lean
 ```
-
----
 
 ## Modellbeschreibung
 
