@@ -1,0 +1,14 @@
+@startuml allergroebstes-modell
+class Raum {
+  +id: String
+}
+
+Raum "1..*" -- "1..*" Raum : istNachbarVon
+
+note left of Raum
+  Regeln:
+  - symmetrisch
+  - kein Selbstnachbar
+  - statisch
+end note
+@enduml
