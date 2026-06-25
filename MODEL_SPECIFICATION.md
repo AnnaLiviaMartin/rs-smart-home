@@ -21,7 +21,7 @@ TODO:
 - Räume sind eindeutig identifizierbar.
 - Räume sind statisch. Sie bleiben an ihrer Raum-Topologie-Stelle.
 
-[Grafik](docs/diagrams/allergroebstes-modell.plantuml)
+Hier ist das zugehörige [Klassendiagramm](docs/diagrams/allergroebstes-modell.plantuml) zum besseren Verständnis ansehbar.
 
 ## Gröbstes Modell
 
