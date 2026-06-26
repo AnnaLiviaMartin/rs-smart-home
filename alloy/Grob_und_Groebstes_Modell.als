@@ -1,4 +1,4 @@
-//Gröbstes Modell
+//Allergröbstes Modell
 sig PERSON {}
 
 sig RAUM {
