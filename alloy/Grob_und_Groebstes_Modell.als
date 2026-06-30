@@ -11,16 +11,16 @@ pred mindestensZweiRaume{
 	#RAUM >= 2
 }
 
+pred raeumeEindeutigIdentifizierbar {
+	all disj r1, r2: RAUM | r1.id != r2.id
+}
+
 pred raumIstNichtEigenerNachbar {
-	always (
-		all r: RAUM | r not in r.nachbarn
-	)
+	all r: RAUM | r not in r.nachbarn
 }
 
 pred nachbarnSindSymmetrisch {
-	always (
-		all r1, r2: RAUM | r1 in r2.nachbarn <=> r2 in r1.nachbarn
-	)
+	all r1, r2: RAUM | r1 in r2.nachbarn <=> r2 in r1.nachbarn
 }
 
 // Gröbstes Modell
@@ -30,20 +30,35 @@ pred einePersonInGenauEinemRaum {
 	)
 }
 
-pred personenKoennenNurZwischenNachbarnWechseln {
-	always (
-		all p: PERSON, r1, r2: RAUM |
-			(p in r1.personenImRaum and p in r2.personenImRaum' and r1 != r2)
-			implies r2 in r1.nachbarn
-	)
+pred raumWechseln [p: PERSON, r1, r2: RAUM]{
+	//pre
+	r1 != r2
+	r2 in r1.nachbarn
+	p in r1.personenImRaum
+
+	//post
+	r1.personenImRaum' = r1.personenImRaum - p
+	r2.personenImRaum' = r2.personenImRaum + p
+
+	//frameCondition, damit sich die anderen Räume nicht ändern
+	all r: RAUM - (r1 + r2) | r.personenImRaum' = r.personenImRaum
 }
 
+pred stutter{
+	all r: RAUM | r.personenImRaum' = r.personenImRaum
+}
+
+
+
 pred show{
+	raeumeEindeutigIdentifizierbar
 	mindestensZweiRaume
 	raumIstNichtEigenerNachbar
 	nachbarnSindSymmetrisch
 	einePersonInGenauEinemRaum
-	personenKoennenNurZwischenNachbarnWechseln
+
+	always some p: PERSON, r1, r2: RAUM | raumWechseln[p, r1, r2]
+//	or stutter
 }
 
 run show 
