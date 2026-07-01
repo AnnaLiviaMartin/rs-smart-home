@@ -20,6 +20,7 @@ TODO:
 - Räume haben sich selbst nicht zum Nachbarn.
 - Räume sind eindeutig identifizierbar.
 - Räume sind statisch. Sie bleiben an ihrer Raum-Topologie-Stelle.
+- Jeder Raum ist durch das betreten weiterer Nachbarräume irgendwann erreichbar (alle Räume sind in einem Gebäude).
 
 Hier ist das zugehörige [Klassendiagramm](docs/diagrams/allergroebstes-modell.plantuml) zum besseren Verständnis ansehbar.
 
