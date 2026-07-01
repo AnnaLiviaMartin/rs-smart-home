@@ -87,12 +87,3 @@ lean SmartHome.lean
 Die fachliche Beschreibung des Smart-Home-Modells befindet sich in:
 
 [MODEL_SPECIFICATION.md](MODEL_SPECIFICATION.md)
-
-Dort werden definiert:
-
-- Entitäten
-- Zustände
-- Beziehungen
-- Sicherheitsregeln
-- Sensorregeln
-- Zu verifizierende Eigenschaften

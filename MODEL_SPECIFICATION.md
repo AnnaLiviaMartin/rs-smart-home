@@ -14,58 +14,14 @@ TODO:
 ### Allergröbstes Modell
 
 - Es gibt Räume.
+- Es gibt mindestens zwei Räume.
 - Räume haben Nachbarräume.
 - Symmetrie: Räume haben sich gegenseitig als Nachbarn. 
 - Räume haben sich selbst nicht zum Nachbarn.
 - Räume sind eindeutig identifizierbar.
 - Räume sind statisch. Sie bleiben an ihrer Raum-Topologie-Stelle.
 
-```mermaid
-classDiagram
-  class Raum {
-    +id: String
-    +typ: RaumTyp
-    +maxKapazitaet: Int
-    +istDicht(): Boolean
-    +hatNachbar(r: Raum): Boolean
-  }
-  class Person {
-    +id: String
-    +typ: PersonTyp
-    +aktuellerRaum: Raum
-    +betritt(r: Raum): Boolean
-    +verlasst(): void
-  }
-  class Bewohner {
-    +eigentumsRaeume: Raum[]
-    +besitztRaum(r: Raum): Boolean
-  }
-  class Gast {
-    +darfBetreten(r: Raum, b: Bewohner): Boolean
-  }
-  class System {
-    +zustand: Systemzustand
-    +raeume: Raum[]
-    +personen: Person[]
-    +wechselZustand(z: Systemzustand): void
-  }
-  class Systemzustand {
-    <<enumeration>>
-    NORMAL
-    ALARM
-    REGEN
-  }
-
-  Person <|-- Bewohner
-  Person <|-- Gast
-  Raum "1" --> "0..*" Raum : hatNachbarn
-  Person "0..*" --> "1" Raum : istIn
-  Bewohner "0..*" --> "0..*" Raum : besitzt
-  System "1" --> "0..*" Raum : verwaltet
-  System "1" --> "0..*" Person : verwaltet
-  System --> Systemzustand : hatZustand
-```
-
+Hier ist das zugehörige [Klassendiagramm](docs/diagrams/allergroebstes-modell.plantuml) zum besseren Verständnis ansehbar.
 
 ## Gröbstes Modell
 
