@@ -19,6 +19,16 @@ Bis 08.07
 - Präsentation und UML für alles (David)
 - Mathematische Spezifikation festhalten (David)
 
+Präsi - 20 Minuten
+Pyramidales erzählen -> Erst das Ergebnis zeigen, dann die Theorie dahinter, damit man als Zuhörer von Informationen von anfang an einordnen kann
+Demo: alloy und lean -> motivation -> theorie
+Alloy ergebnisse mit screenshots zeigen
+Lageplan praktisch für das Verständnis der Zuhörenden
+Thematisch nach Spezifikation strukturieren, erst Grundstruktur anschließend Verfeinerung
+
+Graphentheorie ist in Mathlib definiert? Generell schauen nach einer Graphenbibiliothek
+
+
 ### Allergröbstes Modell
 
 - Es gibt Räume.
