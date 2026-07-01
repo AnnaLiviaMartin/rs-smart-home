@@ -6,10 +6,18 @@ Dieses Dokument beschreibt die fachliche Modellierung des Smart-Home-Systems una
 
 # 1. Anwesenheitserkennung & Zutrittskontrolle
 TODO: 
+
+Bis 01.07
 - Diagramme mit Mermaid hinzufügen: UML-Diagramme, Entity-Relationship-Modell (Livia)
 - Allergröbstes Modell in Alloy (Verena)
 - Allergröbstes Modell in Lean (David)
 - Karte malen (David)
+
+Bis 08.07
+- Alloy bis zum Feinen Modell ohne Alarmzustand (Livia, Verena check)
+- Lean bis zum gröbsten Modell, ansonsten schauen wie weit man kommt (Verena)
+- Präsentation und UML für alles (David)
+- Mathematische Spezifikation festhalten (David)
 
 ### Allergröbstes Modell
 
