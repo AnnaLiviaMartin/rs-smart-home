@@ -1,6 +1,6 @@
 //Allergröbstes Modell
 sig RAUM {
-var	personenImRaum: set PERSON,
+	var	personenImRaum: set PERSON,
 	id: Int,
 	nachbarn: some RAUM
 }
@@ -45,7 +45,7 @@ pred raumWechseln [p: PERSON, r1, r2: RAUM]{
 	r2.personenImRaum' = r2.personenImRaum + p
 
 	//frameCondition, damit sich die anderen Räume nicht ändern
-	all r: RAUM - (r1 + r2) | r.personenImRaum' = r.personenImRaum
+	//all r: RAUM - (r1 + r2) | r.personenImRaum' = r.personenImRaum
 }
 
 pred stutter{
@@ -53,15 +53,16 @@ pred stutter{
 }
 
 pred show{
+	// Allergroebstes Modell
 	raeumeEindeutigIdentifizierbar
 	mindestensZweiRaume
 	raumIstNichtEigenerNachbar
 	nachbarnSindSymmetrisch
 	keineRaumInseln
+	// Groebstes Modell
 	einePersonInGenauEinemRaum
-
 	always some p: PERSON, r1, r2: RAUM | raumWechseln[p, r1, r2]
 //	or stutter
 }
 
-run show 
+run show for exactly 5 RAUM, 8 PERSON
