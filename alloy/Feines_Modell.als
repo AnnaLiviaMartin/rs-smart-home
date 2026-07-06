@@ -26,29 +26,6 @@ pred einePersonInGenauEinemRaum {
 	)
 }
 
-pred raumWechseln [p: PERSON, r1, r2: RAUM]{
-	//pre
-	r1 != r2
-	r2 in r1.nachbarn
-	p in r1.personenImRaum
-	#(r1.personenImRaum) <= r1.maxPersonenInRaum
-	#(r2.personenImRaum) <= r2.maxPersonenInRaum
-	darfBetreten[p, r2]
-
-	//post
-	r1.personenImRaum' = r1.personenImRaum - p
-	r2.personenImRaum' = r2.personenImRaum + p
-	#(r2.personenImRaum') <= r2.maxPersonenInRaum
-	#(r1.personenImRaum') <= r1.maxPersonenInRaum
-
-	//frameCondition, damit sich die anderen Räume nicht ändern
-	all r: RAUM - (r1 + r2) | r.personenImRaum' = r.personenImRaum
-}
-
-pred stutter{
-	all r: RAUM | r.personenImRaum' = r.personenImRaum
-}
-
 // Grobes Modell
 pred RaumNurVonYPersonenBesessen {
 	all r: RAUM | r.maxBesitzerFuerRaum >= 0 and r.maxBesitzerFuerRaum <= 5
@@ -84,7 +61,7 @@ abstract sig PERSON {}
 
 sig GAST extends PERSON {}
 sig BEWOHNER extends PERSON {
-	besitzt: set RAUM,
+	besitzt: some RAUM,
  	besitztMaxRaeume: Int
 }
 
@@ -127,6 +104,30 @@ pred bewohnerBesitztMindestensEinenRaum {
 	 all p: BEWOHNER | #(p.besitzt) >= 1
 }
 
+pred raumWechseln [p: PERSON, r1, r2: RAUM]{
+	//pre
+	r1 != r2
+	r2 in r1.nachbarn
+	p in r1.personenImRaum
+	#(r1.personenImRaum) <= r1.maxPersonenInRaum
+	#(r2.personenImRaum) <= r2.maxPersonenInRaum
+	darfBetreten[p, r2]
+	darfBetreten[p, r2]
+
+	//post
+	r1.personenImRaum' = r1.personenImRaum - p
+	r2.personenImRaum' = r2.personenImRaum + p
+	#(r2.personenImRaum') <= r2.maxPersonenInRaum
+	#(r1.personenImRaum') <= r1.maxPersonenInRaum
+
+	//frameCondition, damit sich die anderen Räume nicht ändern
+	all r: RAUM - (r1 + r2) | r.personenImRaum' = r.personenImRaum
+}
+
+pred stutter{
+	all r: RAUM | r.personenImRaum' = r.personenImRaum
+}
+
 pred show{
 	// Allergroebstes Modell
 	raeumeEindeutigIdentifizierbar
@@ -147,7 +148,7 @@ pred show{
 	// Feines Modell
 	bewohnerBesitztMindestensEinenRaum
 	privaterRaumHatBesitzer
-	always all p: PERSON, r: RAUM | p in r.personenImRaum implies darfBetreten[p, r]
+//	always all p: PERSON, r: RAUM | p in r.personenImRaum implies darfBetreten[p, r]
 }
 
 run show for exactly 5 RAUM, 4 PERSON,  6 Int
