@@ -59,10 +59,11 @@ z.B. Funktion: Person ist in Raum A und geht in Raum B. Sie wird dann aus Raum A
 
 ### Feineres Modell
 
-- Eine Person kann ein Gast sein.
-- Ein Bewohner ist eine Person die sowohl einen Raum besitzt als auch andere Räume besuchen kann.
-- Es gibt Räume in Gäste niemals kommen können.
-- Es gibt Räume die Gäste nur mit Besitzer betreten können.
+- Eine Person kann entweder ein Gast oder ein Bewohner sein.
+- Ein Bewohner ist eine Person, die mindestens einen Raum besitzt.
+- Alle Personen haben immer in freie Räume zutritt.
+- Begleiträume dürfen von Gästen nur betreten werden, wenn ein Bewohner in diesem Raum ist.
+- Privaträume dürfen nur vom jeweiligen Bewohner/Besitzer des Raumes betreten werden.
 
 ### Außnahmenzustands-Modell
 
