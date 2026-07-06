@@ -1,6 +1,4 @@
 //Allergröbstes Modell
-sig PERSON {}
-
 sig RAUM {
 var	personenImRaum: set PERSON,
 	id: Int,
@@ -23,7 +21,13 @@ pred nachbarnSindSymmetrisch {
 	all r1, r2: RAUM | r1 in r2.nachbarn <=> r2 in r1.nachbarn
 }
 
+pred keineRaumInseln{
+	all r1, r2: RAUM | r1 != r2 implies r2 in r1.^nachbarn
+}
+
 // Gröbstes Modell
+sig PERSON {}
+
 pred einePersonInGenauEinemRaum {
 	always (all p: PERSON |
 		#(p.~personenImRaum) = 1	
@@ -48,13 +52,12 @@ pred stutter{
 	all r: RAUM | r.personenImRaum' = r.personenImRaum
 }
 
-
-
 pred show{
 	raeumeEindeutigIdentifizierbar
 	mindestensZweiRaume
 	raumIstNichtEigenerNachbar
 	nachbarnSindSymmetrisch
+	keineRaumInseln
 	einePersonInGenauEinemRaum
 
 	always some p: PERSON, r1, r2: RAUM | raumWechseln[p, r1, r2]
