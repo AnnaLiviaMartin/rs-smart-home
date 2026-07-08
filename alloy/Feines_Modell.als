@@ -73,35 +73,35 @@ abstract sig RAUM {
 	maxBesitzerFuerRaum: Int
 }
 
-sig FREIERRAUM extends RAUM {}
-sig PRIVATRAUM extends RAUM {}
+sig FREIERRAUM extends RAUM {} // Ich hatte einen freien Raum interpretiert als einen Raum, in dem sich keine Personen aufhalten?
+sig PRIVATRAUM extends RAUM {} // Ein (Privat)Raum kann von höchstens Y Personen besessen weden fehlt?
 sig BEGLEITRAUM extends RAUM {}
 
 pred darfFreienRaumBetreten [p: PERSON, r: RAUM] {
-	(r in FREIERRAUM) and ((p in GAST) or (p in BEWOHNER))
+	(r in FREIERRAUM) and ((p in GAST) or (p in BEWOHNER)) // gibt ja nur Gast und Bewohner
 }
 
-pred darfPrivatenRaumBetreten [p: PERSON, r: RAUM] {
-	(r in PRIVATRAUM) and p in BEWOHNER and r in p.besitzt
-}
-
-pred darfBegleitRaumBetreten [p: PERSON, r: RAUM] {
+pred darfBegleitRaumBetreten [p: PERSON, r: RAUM] { // umschreiben in GastDarfBegleitRaumBetreten + logik Umschreiben. Einzige Constraint trifft ja nur auf den Gast zu. Bewohner dürfen sich ja normal bewegen...
 	(r in BEGLEITRAUM) and (
 	    p in BEWOHNER
 	    or (p in GAST and some b: BEWOHNER | b in r.personenImRaum)
 	  )
 }
 
+pred darfPrivatenRaumBetreten [p: PERSON, r: RAUM] {
+	(r in PRIVATRAUM) and p in BEWOHNER and r in p.besitzt // also dürfen Bewohner ihren eigenen Raum betreten? --> evtl pred besitzerDarfRaumBetreten
+}
+
 pred darfBetreten [p: PERSON, r: RAUM] {
 	darfFreienRaumBetreten[p, r] or darfPrivatenRaumBetreten[p, r] or darfBegleitRaumBetreten[p, r]
 }
 
-pred privaterRaumHatBesitzer {
+pred privaterRaumHatBesitzer { //Siehe Kommentar an sig PRIVATRAUM - die constraint hier könnte man auch als maxBesitzer in PRIVATRAUM definieren
   always all r: PRIVATRAUM | some p: BEWOHNER | r in p.besitzt
 }
 
 pred bewohnerBesitztMindestensEinenRaum {
-	 all p: BEWOHNER | #(p.besitzt) >= 1
+	 all p: BEWOHNER | #(p.besitzt) >= 1  //habe an bewohner.besitzt bereits some geschrieben. Das sollte eigentlcih dasselbe ergebnis erreichen. Dann kann die pred hier entfernt werden?
 }
 
 pred raumWechseln [p: PERSON, r1, r2: RAUM]{
