@@ -19,7 +19,7 @@ Bis 08.07
 - Präsentation und UML für alles (David)
 - Mathematische Spezifikation festhalten (David)
 
-Präsi - 20 Minuten
+Präsi - 30 Minuten
 Pyramidales erzählen -> Erst das Ergebnis zeigen, dann die Theorie dahinter, damit man als Zuhörer von Informationen von anfang an einordnen kann
 Demo: alloy und lean -> motivation -> theorie
 Alloy ergebnisse mit screenshots zeigen
@@ -32,13 +32,13 @@ Graphentheorie ist in Mathlib definiert? Generell schauen nach einer Graphenbibi
 ### Allergröbstes Modell
 
 - Es gibt Räume.
-- Es gibt mindestens zwei Räume.
+-! Es gibt mindestens zwei Räume.
 - Räume haben Nachbarräume.
 - Symmetrie: Räume haben sich gegenseitig als Nachbarn. 
-- Räume haben sich selbst nicht zum Nachbarn.
+- !Räume haben sich selbst nicht zum Nachbarn.
 - Räume sind eindeutig identifizierbar.
 - Räume sind statisch. Sie bleiben an ihrer Raum-Topologie-Stelle.
-- Jeder Raum ist durch das betreten weiterer Nachbarräume irgendwann erreichbar (alle Räume sind in einem Gebäude).
+-! Jeder Raum ist durch das betreten weiterer Nachbarräume irgendwann erreichbar (alle Räume sind in einem Gebäude).
 
 Hier ist das zugehörige [Klassendiagramm](docs/diagrams/allergroebstes-modell.plantuml) zum besseren Verständnis ansehbar.
 

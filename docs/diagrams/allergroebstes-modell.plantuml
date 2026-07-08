@@ -1,6 +1,6 @@
 @startuml allergroebstes-modell
 class Raum {
-  +id: String
+  +id: Int
 }
 
 Raum "1..*" -- "1..*" Raum : istNachbarVon
