@@ -70,11 +70,11 @@ abstract sig RAUM {
 	id: Int,
 	nachbarn: some RAUM,
 	maxPersonenInRaum: Int,
-	maxBesitzerFuerRaum: Int
+	maxBesitzerFuerRaum: Int // Das hier lieber in sig PRIVATRAUM schreiben? Es können ja nur Privaträume besessen werden?
 }
 
 sig FREIERRAUM extends RAUM {} // Ich hatte einen freien Raum interpretiert als einen Raum, in dem sich keine Personen aufhalten?
-sig PRIVATRAUM extends RAUM {} // Ein (Privat)Raum kann von höchstens Y Personen besessen weden fehlt?
+sig PRIVATRAUM extends RAUM {} 
 sig BEGLEITRAUM extends RAUM {}
 
 pred darfFreienRaumBetreten [p: PERSON, r: RAUM] {
@@ -100,9 +100,11 @@ pred privaterRaumHatBesitzer { //Siehe Kommentar an sig PRIVATRAUM - die constra
   always all r: PRIVATRAUM | some p: BEWOHNER | r in p.besitzt
 }
 
+/*
 pred bewohnerBesitztMindestensEinenRaum {
 	 all p: BEWOHNER | #(p.besitzt) >= 1  //habe an bewohner.besitzt bereits some geschrieben. Das sollte eigentlcih dasselbe ergebnis erreichen. Dann kann die pred hier entfernt werden?
 }
+*/
 
 pred raumWechseln [p: PERSON, r1, r2: RAUM]{
 	//pre
@@ -146,7 +148,7 @@ pred show{
 	KapazitaetenEingehalten
 	BesitzLimitiertProRaum
 	// Feines Modell
-	bewohnerBesitztMindestensEinenRaum
+	// bewohnerBesitztMindestensEinenRaum
 	privaterRaumHatBesitzer
 //	always all p: PERSON, r: RAUM | p in r.personenImRaum implies darfBetreten[p, r]
 }
