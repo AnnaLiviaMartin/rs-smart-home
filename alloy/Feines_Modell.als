@@ -61,7 +61,7 @@ abstract sig PERSON {}
 
 sig GAST extends PERSON {}
 sig BEWOHNER extends PERSON {
-	besitzt: some RAUM,
+	besitzt: some PRIVATRAUM,
  	besitztMaxRaeume: Int
 }
 
@@ -69,51 +69,45 @@ abstract sig RAUM {
 	var	personenImRaum: set PERSON,
 	id: Int,
 	nachbarn: some RAUM,
-	maxPersonenInRaum: Int,
-	maxBesitzerFuerRaum: Int // Das hier lieber in sig PRIVATRAUM schreiben? Es können ja nur Privaträume besessen werden?
+	maxPersonenInRaum: Int
 }
 
-sig FREIERRAUM extends RAUM {} // Ich hatte einen freien Raum interpretiert als einen Raum, in dem sich keine Personen aufhalten?
-sig PRIVATRAUM extends RAUM {} 
+sig PRIVATRAUM extends RAUM {
+	maxBesitzerFuerRaum: Int
+}
+sig NORMALERRAUM extends RAUM {} 
 sig BEGLEITRAUM extends RAUM {}
 
-pred darfFreienRaumBetreten [p: PERSON, r: RAUM] {
-	(r in FREIERRAUM) and ((p in GAST) or (p in BEWOHNER)) // gibt ja nur Gast und Bewohner
+pred darfNormalenRaumBetreten [p: PERSON, r: RAUM] {
+	(r in NORMALERRAUM)
 }
 
-pred darfBegleitRaumBetreten [p: PERSON, r: RAUM] { // umschreiben in GastDarfBegleitRaumBetreten + logik Umschreiben. Einzige Constraint trifft ja nur auf den Gast zu. Bewohner dürfen sich ja normal bewegen...
+pred darfBegleitRaumBetreten [p: PERSON, r: RAUM] { 
 	(r in BEGLEITRAUM) and (
 	    p in BEWOHNER
 	    or (p in GAST and some b: BEWOHNER | b in r.personenImRaum)
-	  )
+	)
 }
 
-pred darfPrivatenRaumBetreten [p: PERSON, r: RAUM] {
-	(r in PRIVATRAUM) and p in BEWOHNER and r in p.besitzt // also dürfen Bewohner ihren eigenen Raum betreten? --> evtl pred besitzerDarfRaumBetreten
+pred besitzerDarfRaumBetreten [p: PERSON, r: RAUM] {
+	(r in PRIVATRAUM) and p in BEWOHNER and r in p.besitzt
 }
 
 pred darfBetreten [p: PERSON, r: RAUM] {
-	darfFreienRaumBetreten[p, r] or darfPrivatenRaumBetreten[p, r] or darfBegleitRaumBetreten[p, r]
+	darfNormalenRaumBetreten[p, r] or besitzerDarfRaumBetreten[p, r] or darfBegleitRaumBetreten[p, r]
 }
 
-pred privaterRaumHatBesitzer { //Siehe Kommentar an sig PRIVATRAUM - die constraint hier könnte man auch als maxBesitzer in PRIVATRAUM definieren
+pred privaterRaumHatBesitzer {
   always all r: PRIVATRAUM | some p: BEWOHNER | r in p.besitzt
 }
 
-/*
-pred bewohnerBesitztMindestensEinenRaum {
-	 all p: BEWOHNER | #(p.besitzt) >= 1  //habe an bewohner.besitzt bereits some geschrieben. Das sollte eigentlcih dasselbe ergebnis erreichen. Dann kann die pred hier entfernt werden?
-}
-*/
-
-pred raumWechseln [p: PERSON, r1, r2: RAUM]{
+pred raumWechseln [p: PERSON, r1, r2: RAUM] {
 	//pre
 	r1 != r2
 	r2 in r1.nachbarn
 	p in r1.personenImRaum
 	#(r1.personenImRaum) <= r1.maxPersonenInRaum
 	#(r2.personenImRaum) <= r2.maxPersonenInRaum
-	darfBetreten[p, r2]
 	darfBetreten[p, r2]
 
 	//post
@@ -126,7 +120,7 @@ pred raumWechseln [p: PERSON, r1, r2: RAUM]{
 	all r: RAUM - (r1 + r2) | r.personenImRaum' = r.personenImRaum
 }
 
-pred stutter{
+pred stutter {
 	all r: RAUM | r.personenImRaum' = r.personenImRaum
 }
 
@@ -148,9 +142,8 @@ pred show{
 	KapazitaetenEingehalten
 	BesitzLimitiertProRaum
 	// Feines Modell
-	// bewohnerBesitztMindestensEinenRaum
 	privaterRaumHatBesitzer
-//	always all p: PERSON, r: RAUM | p in r.personenImRaum implies darfBetreten[p, r]
+	all p: PERSON, r: RAUM | p in r.personenImRaum implies darfBetreten[p, r]	// ohne das hier können Personen anfangs in Räumen spawnen in die sie nicht dürfen
 }
 
-run show for exactly 5 RAUM, 4 PERSON,  6 Int
+run show for exactly 5 RAUM, exactly 1 PRIVATRAUM, exactly 2 NORMALERRAUM, 4 PERSON,  6 Int

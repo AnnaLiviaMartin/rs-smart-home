@@ -63,7 +63,7 @@ z.B. Funktion: Person ist in Raum A und geht in Raum B. Sie wird dann aus Raum A
 - Ein Bewohner ist eine Person, die mindestens einen Raum besitzt.
 - Alle Personen haben immer in freie Räume zutritt.
 - Begleiträume dürfen von Gästen nur betreten werden, wenn ein Bewohner in diesem Raum ist.
-- Ein Privatraum hat mindestens einen Besitzer, der Bewohner ist
+- Ein Privatraum hat mindestens einen Besitzer, der Bewohner ist.
 - Privaträume dürfen nur vom jeweiligen Bewohner/Besitzer des Raumes betreten werden.
 
 ### Außnahmenzustands-Modell
