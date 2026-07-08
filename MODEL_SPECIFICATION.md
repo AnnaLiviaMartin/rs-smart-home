@@ -28,6 +28,13 @@ Thematisch nach Spezifikation strukturieren, erst Grundstruktur anschließend Ve
 
 Graphentheorie ist in Mathlib definiert? Generell schauen nach einer Graphenbibiliothek
 
+Bis 12.07: 
+- Spezifikation umbauen (Verena)
+- Lean grobes modell (Livia)
+
+Beweisen, dass grobe und Feine Modelle zusammenarbeiten in Alloy
+Wir können in den ersten Zwei spezifikationsschritten die Objekte definieren und ab dem dritten schritt die Constraints. Ab dann können wir mit Event-B weiterdefinieren und Zusammenspiel von groben und feinem modell beweisen.
+
 
 ### Allergröbstes Modell
 
