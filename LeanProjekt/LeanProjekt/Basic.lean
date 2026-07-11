@@ -1,14 +1,14 @@
+import Mathlib
 /-
   Smart Home – Allergröbstes Modell
 
   Modelliert werden nur:
-  - Räume
-  - Nachbarschaft
-  - Symmetrie
-  - Keine Selbstnachbarschaft
-  - alle Räume liegen in einem Gebäude
+  - Räume: myNode und myEdges
+  - Nachbarschaft: Adj := myAdjRelProp
+  - Symmetrie: symm von SimpleGraph
+  - Keine Selbstnachbarschaft: loopless von SimpleGraph
+  - alle Räume liegen in einem Gebäude -> Alle Räume sind Teil desselben zusammenhängenden Graphen
 -/
-import Mathlib
 
 abbrev myNode := Fin 6
 
@@ -44,9 +44,44 @@ def myGraph : SimpleGraph myNode :=
     decide
 }
 
-example : ∀ n1 n2, myGraph.Adj n1 n2 → n1 ≠ n2
-:= by apply SimpleGraph.Adj.ne
 
-example : ∀ n1 n2, myGraph.Adj n1 n2 → n1 ≠ n2 := by
-  intro n1 n2 h
-  exact SimpleGraph.Adj.ne h
+/-
+  Alle Räume sind Teil desselben zusammenhängenden Graphen
+-/
+-- Welche Knoten sind direkt neben n?
+def neighbors (n : myNode) : List myNode :=
+  match myEdges.find? (fun x => x.1 = n) with
+  | some (_, ns) => ns
+  | none => []
+
+-- suche max. fuel Schritte, ob target erreicht werden kann von todo aus (Liste der Knoten, die wir untersuchen)
+def reachableAux (fuel : Nat) (target : myNode) (todo : List myNode) (visited : List myNode) : Bool :=
+  match fuel with
+  | 0 => false
+  | fuel + 1 =>
+      match todo with
+      | [] => false
+      | x :: xs =>
+          if x = target then
+            true
+          else if x ∈ visited then
+            reachableAux fuel target xs visited
+          else
+            reachableAux fuel target (xs ++ neighbors x) (x :: visited)
+
+def reachableBool (start target : myNode) : Bool :=
+  reachableAux 20 target [start] []
+
+#eval neighbors 0
+#eval neighbors 2
+#eval reachableAux 20 5 [0] [] -- konvertiert das in untere Zeile
+#eval reachableBool 0 5
+
+def allNodes : List myNode := [0, 1, 2, 3, 4, 5]
+
+def allReachable : Bool :=
+  allNodes.all (fun start =>
+    allNodes.all (fun target =>
+      reachableBool start target))
+
+#eval allReachable
