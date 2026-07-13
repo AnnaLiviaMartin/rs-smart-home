@@ -1,0 +1,32 @@
+@startuml allergroebstes-modell
+class Person{}
+
+class Ort{}
+
+Ort "1...*" -- "1...*" Ort: istNachabrVon
+Ort "0...n" -- "0...n" Person: personImOrt
+
+class Raum extends Ort{
+    +id: Int
+}
+
+note left of Raum
+Stand jetzt och keine Id nötig?
+end note
+
+
+class Tuer extends Ort{
+    +istNachbarVon: Zimmer
+}
+
+class Zimmer extends Raum {
+    +istNachbarVon: Tuer
+}
+
+note left of Zimmer
+Nachbar ist nur auf Typ Tür eingeschränkt
+end note
+
+class Garten extends Raum{}
+
+@endumlD
