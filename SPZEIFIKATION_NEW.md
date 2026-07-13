@@ -8,7 +8,7 @@
 - Alle Nachbarschaftsbeziehungen der Räume und Türen sind symmetrisch
 
 ## Logik
-- Personen können zwischen verbundenen Räumen wechseln 
+- Personen können nur durch geöffnete Türen gehen
 _(Sofern es Personenstatus zulassen - muss später noch eingefügt werden)_
 
 # Verfeinertes Modell 01 (Zutrittskontrolle)
