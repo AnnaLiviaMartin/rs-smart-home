@@ -75,7 +75,7 @@ fact tuerVerbindetZweiRaeume {
 
 pred moveGrob[p: PERSON, von, nach: RAUM]{
 	//pre
-	some t: TUER | t in von.nachbarn and t in nach.nachbarn
+	some t: TUER | t in von.nachbarn and t in nach.nachbarn and t.offen in True
 
 	//post
 	von.personenImOrtGrob' = von.personenImOrtGrob - p
@@ -94,7 +94,7 @@ pred stutterGrob{
 pred betreteTuer[p: PERSON, von: RAUM, t: TUER]{
 	p in von.personenImOrtFein
 	t in von.nachbarn
-//	t.offen = True
+	t.offen in True
 
 	von.personenImOrtFein' = von.personenImOrtFein - p
 	t.personenImOrtFein' = t.personenImOrtFein + p
@@ -132,11 +132,13 @@ pred next {
 
 pred stutter {
 	all o: ORT | o.personenImOrtFein' = o.personenImOrtFein
+	all o: ORT | o.personenImOrtGrob' = o.personenImOrtGrob
 }
 
 pred show {
 	init
-	always (next)
+	always (next or stutter) //next zwingt eine bewegung, weshalb die erste Tür immer offen war
+	eventually next //durch stutter nimmt Alloy immer die einfachste lösung, durch eventually muss in der zukunft immer mindestes eine next beegung stattfinden.
 }
 
 run show for exactly 2 PERSON, exactly 2 ZIMMER, exactly 1 GARTEN, 2 AUTHENTICATION, exactly 2 TUER, exactly 3 RAUM
