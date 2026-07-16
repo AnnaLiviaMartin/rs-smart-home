@@ -32,6 +32,6 @@ def myBipartiteGraph : BipartitePlaceGraph myPlaces where
   Adj u v := myAdjRelBool u.val v.val
   symm := by constructor; decide
   loopless := by constructor; decide
-  bipartite := by -- im Prinzip der gleiche Beweis wie beim example
+  bipartite := by
     unfold adjIsBipartite
     decide
