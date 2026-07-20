@@ -50,6 +50,10 @@ fact einePersonInGenauEinemOrt {
 	)
 }
 
+//fact tuerKannKeinePersonenEnthalten_GROB{
+//	always all t: TUER | no t.personenImOrtGrob
+//}
+
 fact personKannNurDurchOffeneTürGehen {
 	always all t: TUER, p: PERSON | p in t.personenImOrtGrob implies t.offen = True
 }
@@ -135,13 +139,13 @@ pred stutter {
 	all o: ORT | o.personenImOrtGrob' = o.personenImOrtGrob
 }
 
-pred show {
+fact show {
 	init
 	always (next or stutter) //next zwingt eine bewegung, weshalb die erste Tür immer offen war
 	eventually next //durch stutter nimmt Alloy immer die einfachste lösung, durch eventually muss in der zukunft immer mindestes eine next beegung stattfinden.
 }
 
-run show for exactly 2 PERSON, exactly 2 ZIMMER, exactly 1 GARTEN, 2 AUTHENTICATION, exactly 2 TUER, exactly 3 RAUM
+//run show for exactly 2 PERSON, exactly 2 ZIMMER, exactly 1 GARTEN, 2 AUTHENTICATION, exactly 2 TUER, exactly 3 RAUM
 
 // ############### checks und assertions #############
 
@@ -149,6 +153,24 @@ assert keineTeleportation {
 	always all p: PERSON, von, nach: ORT | 
 	(p in von.personenImOrtGrob and p in nach.personenImOrtGrob' implies (nach in von.nachbarn)) or
 	(p in von.personenImOrtGrob and p in von.personenImOrtGrob') //stutter
+}
+
+assert keineTeleportation_GROB {
+	always all p: PERSON, von, nach: ORT | 
+	(p in von.personenImOrtGrob and p in nach.personenImOrtGrob' implies (nach in von.nachbarn.nachbarn)) or
+	(p in von.personenImOrtGrob and p in von.personenImOrtGrob') //stutter
+}
+
+assert keineTeleportation_FEIN {
+	always all p: PERSON, von, nach: ORT | 
+	(p in von.personenImOrtFein and p in nach.personenImOrtFein' implies (nach in von.nachbarn)) or
+	(p in von.personenImOrtFein and p in von.personenImOrtFein') //stutter
+}
+
+//braucht man eigentlich nicht, wenn fact einkommentiert, bruacht man es icht mehr?
+assert personIstNieInTuer_GROB {
+	always all p: PERSON, t: TUER |
+	(p not in t.personenImOrtGrob)
 }
 
 assert gleichesErgebnisInFreinUndGrob{
@@ -161,5 +183,7 @@ assert gleichesErgebnisInFreinUndGrob_V2 { //Hier gabe es die verbesserung, dass
 		p in r.personenImOrtFein implies p in r.personenImOrtGrob
 }
 
-check keineTeleportation for 4
+check keineTeleportation_GROB for 4
+check keineTeleportation_FEIN for 4
+check personIstNieInTuer_GROB for 4
 check gleichesErgebnisInFreinUndGrob_V2 for 4
