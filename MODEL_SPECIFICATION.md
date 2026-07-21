@@ -46,7 +46,7 @@ Sämtliche Objekte und deren Beziehungen, die in den Feineren Modellen erst defi
 # Grobes Modell
 
 ## Objekte und Beziehungen
-- Ex gibt Orte, in denen sich Personen aufhalten können.
+- Es gibt Orte, in denen sich Personen aufhalten können.
 - Türen und Räume sind Orte
 - Es gibt Räume, die sich in Garten und Zimmer aufteilen
 - Alle Räume sind über Türen miteinander Verbunden
