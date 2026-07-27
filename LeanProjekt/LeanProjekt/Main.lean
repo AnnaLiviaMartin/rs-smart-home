@@ -14,17 +14,13 @@ inductive Person where
 | Gast (id : Nat)
 deriving DecidableEq, Repr
 
-inductive Authentifizierung where
-| auth (id : Nat)
-deriving DecidableEq, Repr
-
 inductive Raum where
 | Zimmer (id : Nat)
 | Garten
 deriving DecidableEq, Repr
 
 inductive Tuer where
-| tuer (auth : Authentifizierung) -- jedeTuerHatEigenesAuthentifizierungsGeraet
+| tuer (id : Nat)
 deriving DecidableEq, Repr
 
 inductive Ort where
@@ -119,7 +115,7 @@ structure BipartiteOrtGraph (orte : Finset Ort) extends SimpleGraph (OrtSet orte
   --gartenExistiert (orte : Finset Ort) := Ort.Raum Raum.Garten ∈ orte
   genauEinGarten : Ort.Raum Raum.Garten ∈ orte
   tuerEindeutig := ∀ t1 t2 : Tuer, t1 ≠ t2 →
-    (match t1,t2 with | Tuer.tuer a1, Tuer.tuer a2 => a1 ≠ a2) -- jedeTuerHatEigenesAuthentifizierungsGeraet
+    (match t1,t2 with | Tuer.tuer t1, Tuer.tuer t2 => t1 ≠ t2)
 
 /-
   Objekte, die sich verändern können: Zustand ist die momentane Ausprägung
@@ -144,9 +140,6 @@ structure Zustand (orte : Finset Ort) (personen : Finset Person) where
 
 /-
   Invarianten, die bereits implizit definiert sind:
-
-  Jede Tür besitzt genau eine Authentifizierung.
-  Durch Tuer.tuer (auth : Authentifizierung) bereits garantiert.
 
   offen besitzt genau einen Bool-Wert.
   Durch offen : OrtSet orte → Bool bereits garantiert.
@@ -203,12 +196,6 @@ def raumImOrt (o : OrtSet orte) : Option Raum :=
   match o.val with
   | Ort.Raum r => some r
   | Ort.Tuer _ => none
-
-/-- Authentifizierungsgerät eines Ortes, falls es sich um eine Tür handelt. -/
-def authImOrt (o : OrtSet orte) : Option Authentifizierung :=
-  match o.val with
-  | Ort.Tuer (Tuer.tuer auth) => some auth
-  | Ort.Raum _ => none
 
 /-- Der Garten als Knoten im Gebäudegraphen. -/
 def gartenOrt (G : BipartiteOrtGraph orte) : OrtSet orte :=
@@ -394,69 +381,267 @@ def frame_moveGrob_letzterRaumUnveraendert {orte : Finset Ort} {personen : Finse
   ∀ p : Person, z'.letzterRaum p = z.letzterRaum p
 
 -- pre_betreteTuer_personImQuellraum
+def pre_betreteTuer_personImQuellraum {orte : Finset Ort} {personen : Finset Person} (z : Zustand orte personen) (p : PersonSet personen) (von : OrtSet orte) : Prop :=
+  p.val ∈ feinAmOrt z von
+
 -- pre_betreteTuer_tuerIstNachbar
+def pre_betreteTuer_tuerIstNachbar {orte : Finset Ort} (G : BipartiteOrtGraph orte) (von : OrtSet orte) (tuer : OrtSet orte) : Prop :=
+  G.Adj von tuer
+
 -- pre_betreteTuer_tuerIstOffen
+def pre_betreteTuer_tuerIstOffen {orte : Finset Ort} {personen : Finset Person} (z : Zustand orte personen) (tuer : OrtSet orte) : Prop :=
+  z.offen tuer = true
+
 -- pre_betreteTuer_quellortIstRaum
+def pre_betreteTuer_quellortIstRaum {orte : Finset Ort} (von : OrtSet orte) : Prop :=
+  istRaumOrt von
+
 -- pre_betreteTuer_tuerIstTuer
+def pre_betreteTuer_tuerIstTuer {orte : Finset Ort} (tuer : OrtSet orte) : Prop :=
+  istTuerOrt tuer
+
 -- post_betreteTuer_personInTuer
+def post_betreteTuer_personInTuer {orte : Finset Ort} {personen : Finset Person} (z' : Zustand orte personen) (p : PersonSet personen) (tuer : OrtSet orte) : Prop :=
+  p.val ∈ feinAmOrt z' tuer
+
 -- post_betreteTuer_personAusRaumEntfernt
+def post_betreteTuer_personAusRaumEntfernt {orte : Finset Ort} {personen : Finset Person} (z' : Zustand orte personen) (p : PersonSet personen) (von : OrtSet orte) : Prop :=
+  p.val ∉ feinAmOrt z' von
+
 -- post_betreteTuer_letzterRaumAktualisiert
+def post_betreteTuer_letzterRaumAktualisiert {orte : Finset Ort} {personen : Finset Person} (z' : Zustand orte personen) (p : PersonSet personen) (von : OrtSet orte) : Prop :=
+  match von.val with
+  | Ort.Raum r =>
+      z'.letzterRaum p.val = some r
+  | Ort.Tuer _ =>
+      False
+
 -- post_betreteTuer_keineTeleportationFein
+def post_betreteTuer_keineTeleportationFein {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (z z' : Zustand orte personen) : Prop :=
+  ∀ p : PersonSet personen,
+    ∀ alt neu : OrtSet orte,
+      p.val ∈ feinAmOrt z alt → -- Wenn q im alten Zustand grob in alt liegt,
+      p.val ∈ feinAmOrt z' neu → -- und im neuen Zustand grob in neu liegt,
+      neu = alt ∨ G.Adj alt neu -- folgt daraus die Bedinung: Entweder ist der neue Ort derselbe wie der alte, oder alt und neu sind Nachbarn.
+
 -- frame_betreteTuer_alleAnderenFeinenBelegungenUnveraendert
+def frame_betreteTuer_alleAnderenFeinenBelegungenUnveraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) (von : OrtSet orte) (tuer : OrtSet orte) : Prop :=
+  ∀ o : OrtSet orte,
+    o ≠ von →
+    o ≠ tuer →
+    feinAmOrt z' o = feinAmOrt z o
 
 -- pre_verlasseTuer_personInTuer
+def pre_verlasseTuer_personInTuer {orte : Finset Ort} {personen : Finset Person} (z : Zustand orte personen) (p : PersonSet personen) (tuer : OrtSet orte) : Prop :=
+  p.val ∈ feinAmOrt z tuer
+
 -- pre_verlasseTuer_tuerIstTuer
+def pre_verlasseTuer_tuerIstTuer {orte : Finset Ort} (tuer : OrtSet orte) : Prop :=
+  istTuerOrt tuer
+
 -- pre_verlasseTuer_zielraumIstRaum
+def pre_verlasseTuer_zielraumIstRaum {orte : Finset Ort} (nach : OrtSet orte) : Prop :=
+  istRaumOrt nach
+
 -- pre_verlasseTuer_tuerVerbindetZielraum
+def pre_verlasseTuer_tuerVerbindetZielraum {orte : Finset Ort} (G : BipartiteOrtGraph orte) (tuer nach : OrtSet orte) : Prop :=
+  G.Adj tuer nach
+
 -- pre_verlasseTuer_zielraumIstNachbar
+def pre_verlasseTuer_zielraumIstNachbar {orte : Finset Ort} (G : BipartiteOrtGraph orte) (tuer nach : OrtSet orte) : Prop :=
+  G.Adj nach tuer
+
 -- pre_verlasseTuer_zielraumUngleichLetzterRaum
+def pre_verlasseTuer_zielraumUngleichLetzterRaum {orte : Finset Ort} {personen : Finset Person} (z : Zustand orte personen) (p : PersonSet personen) (nach : OrtSet orte) : Prop :=
+  match nach.val with
+  | Ort.Raum r => z.letzterRaum p.val ≠ some r  -- Der letzte Raum von p ist nicht genau dieser Raum.
+  | Ort.Tuer _ => False
+
 -- post_verlasseTuer_personImZielraum
+def post_verlasseTuer_personImZielraum {orte : Finset Ort} {personen : Finset Person} (z' : Zustand orte personen) (p : PersonSet personen) (nach : OrtSet orte) : Prop :=
+  p.val ∈ feinAmOrt z' nach
+
 -- post_verlasseTuer_personAusTuerEntfernt
+def post_verlasseTuer_personAusTuerEntfernt {orte : Finset Ort} {personen : Finset Person} (z' : Zustand orte personen) (p : PersonSet personen) (tuer : OrtSet orte) : Prop :=
+  p.val ∉ feinAmOrt z' tuer
+
 -- post_verlasseTuer_keineTeleportationFein
--- frame_verlasseTuer_grobBelegungVeraendert
+def post_verlasseTuer_keineTeleportationFein {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (z z' : Zustand orte personen) : Prop :=
+  ∀ p : PersonSet personen,
+    ∀ alt neu : OrtSet orte,
+      p.val ∈ feinAmOrt z alt →
+      p.val ∈ feinAmOrt z' neu →
+      neu = alt ∨ G.Adj alt neu
+
 -- frame_verlasseTuer_alleAnderenFeinenBelegungenUnveraendert
+def frame_verlasseTuer_alleAnderenFeinenBelegungenUnveraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) (nach tuer : OrtSet orte) : Prop :=
+  ∀ o : OrtSet orte,
+    o ≠ nach →
+    o ≠ tuer →
+    feinAmOrt z' o = feinAmOrt z o
 
 -- pre_move2_raeumeSindDurchTuerVerbunden
--- pre_move2_betreteOderVerlasseTuer
--- post_move2_verlasseTuerGrobBewegt
--- post_move2_keineTeleportationFein
--- post_move2_keineTeleportationGrob
--- post_move2_feinImpliziertGrob
--- post_move2_betreteTuerFeinAktualisiert
--- post_move2_verlasseTuerFeinAktualisiert
--- post_move2_letzterRaumKorrektBehandelt
--- frame_move2_grobBelegungVeraendert
--- frame_move2_offenUnveraendert
--- frame_move2_betreteTuerGrobUnveraendert
+def pre_move2_raeumeSindDurchTuerVerbunden {orte : Finset Ort} (G : BipartiteOrtGraph orte) (t1 t2 tuer : OrtSet orte) : Prop :=
+  t1 ≠ t2 ∧ istRaumOrt t1 ∧ istRaumOrt t2 ∧ istTuerOrt tuer ∧ G.Adj t1 tuer ∧ G.Adj t2 tuer
 
--- pre_anmelden_authentifizierungGueltig
--- pre_anmelden_authentifizierungsGeraetGehoertZurTuer
+-- post_move2_verlasseTuerGrobBewegt
+def post_move2_verlasseTuerGrobBewegt {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) (p : PersonSet personen) (o o' : OrtSet orte) : Prop :=
+  ∀ ort : OrtSet orte,
+    grobAmOrt z' o =
+      if ort = o then (grobAmOrt z o).erase p.val
+      else if o = o' then insert p.val (grobAmOrt z o')
+      else grobAmOrt z o
+
+-- post_move2_keineTeleportationFein
+def post_move2_keineTeleportationFein {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (z z' : Zustand orte personen) : Prop :=
+  ∀ p : PersonSet personen,
+    ∀ alt neu : OrtSet orte,
+      p.val ∈ feinAmOrt z alt →
+      p.val ∈ feinAmOrt z' neu →
+      neu = alt ∨ G.Adj alt neu
+
+-- post_move2_keineTeleportationGrob
+def post_move2_keineTeleportationGrob {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (z z' : Zustand orte personen) : Prop :=
+  ∀ p : PersonSet personen,
+    ∀ alt neu : OrtSet orte,
+      p.val ∈ grobAmOrt z alt →
+      p.val ∈ grobAmOrt z' neu →
+      neu = alt ∨
+      ∃ tuer : OrtSet orte,
+        istTuerOrt tuer ∧
+        G.Adj alt tuer ∧
+        G.Adj tuer neu
+
+-- post_move2_betreteTuerFeinAktualisiert
+def post_move2_betreteTuerFeinAktualisiert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) (p : PersonSet personen) (raum tuer : OrtSet orte) : Prop :=
+  ∀ o : OrtSet orte,
+    feinAmOrt z' o =
+      if o = raum then (feinAmOrt z raum).erase p.val
+      else if o = tuer then insert p.val (feinAmOrt z tuer)
+      else feinAmOrt z o
+
+-- post_move2_verlasseTuerFeinAktualisiert
+def post_move2_verlasseTuerFeinAktualisiert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) (p : PersonSet personen) (raum' tuer : OrtSet orte) : Prop :=
+  ∀ o : OrtSet orte,
+    feinAmOrt z' o =
+      if o = tuer then (feinAmOrt z tuer).erase p.val
+      else if o = raum' then insert p.val (feinAmOrt z raum')
+      else feinAmOrt z o
+
+-- post_move2_letzterRaumKorrektBehandelt
+def post_move2_letzterRaumKorrektBehandelt {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) (p : PersonSet personen) (r1 : OrtSet orte) : Prop :=
+  (post_betreteTuer_letzterRaumAktualisiert z' p r1 ∧ 
+  ∀ q : Person, q ≠ p.val →
+     z'.letzterRaum q = z.letzterRaum q) -- Entweder wurde bei move2 der Wert von letzterRaum für die bewegte Person korrekt aktualisiert und alle anderen Personen bleiben unverändert,
+  ∨
+  (∀ q : Person, z'.letzterRaum q = z.letzterRaum q) -- oder letzterRaum bleibt für alle Personen komplett gleich.
+
+-- post_move2_grobBelegungVeraendert
+def post_move2_grobBelegungVeraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) (p : PersonSet personen) (r1 r2 : OrtSet orte) : Prop :=
+  (∀ o : OrtSet orte, grobAmOrt z' o = grobAmOrt z o)
+  ∨
+  post_move2_verlasseTuerGrobBewegt z z' p r1 r2
+
+-- frame_move2_offenUnveraendert
+def frame_move2_offenUnveraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) : Prop :=
+  ∀ o : OrtSet orte, z'.offen o = z.offen o
+
+-- frame_move2_betreteTuerGrobUnveraendert
+def frame_move2_betreteTuerGrobUnveraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) : Prop :=
+  ∀ o : OrtSet orte, grobAmOrt z' o = grobAmOrt z o
+
+-- frame_move2_letzterRaumUnveraendert
+def frame_move2_letzterRaumUnveraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) : Prop :=
+  ∀ p : Person, z'.letzterRaum p = z.letzterRaum p
+
 -- pre_anmelden_personImRaum
+def pre_anmelden_personImRaum {orte : Finset Ort} {personen : Finset Person} (z : Zustand orte personen) (p : PersonSet personen) (von : OrtSet orte) : Prop :=
+  istRaumOrt von ∧ p.val ∈ feinAmOrt z von
+
 -- pre_anmelden_personIstBewohner
+def pre_anmelden_personIstBewohner {personen : Finset Person} (p : PersonSet personen) : Prop :=
+  istBewohner p.val
+
 -- pre_anmelden_tuerIstNachbar
+def pre_anmelden_tuerIstNachbar {orte : Finset Ort} (G : BipartiteOrtGraph orte) (von tuer : OrtSet orte) : Prop :=
+  istRaumOrt von ∧ istTuerOrt tuer ∧ G.Adj von tuer
+
 -- post_anmelden_tuerGeoeffnet
--- post_anmelden_authentifizierungGespeichert
+def post_anmelden_tuerGeoeffnet {orte : Finset Ort} {personen : Finset Person} (z' : Zustand orte personen) (tuer : OrtSet orte) : Prop :=
+  z'.offen tuer = true
+
 -- frame_anmelden_belegungGrobUnveraendert
+def frame_anmelden_belegungGrobUnveraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) : Prop :=
+  ∀ o : OrtSet orte,
+    grobAmOrt z' o = grobAmOrt z o
+
 -- frame_anmelden_belegungFeinUnveraendert
+def frame_anmelden_belegungFeinUnveraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) : Prop :=
+  ∀ o : OrtSet orte,
+    feinAmOrt z' o = feinAmOrt z o
+
 -- frame_anmelden_letzterRaumUnveraendert
+def frame_anmelden_letzterRaumUnveraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) : Prop :=
+  ∀ p : Person, z'.letzterRaum p = z.letzterRaum p
+
 -- frame_anmelden_andereTuerenUnveraendert
+def frame_anmelden_andereTuerenUnveraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) (tuer : OrtSet orte) : Prop :=
+  ∀ o : OrtSet orte, istTuerOrt o → o ≠ tuer → z'.offen o = z.offen o
 
 -- pre_anmeldungFehlgeschlagen_personImRaum
+def pre_anmeldungFehlgeschlagen_personImRaum {orte : Finset Ort} {personen : Finset Person} (z : Zustand orte personen) (p : PersonSet personen) (von : OrtSet orte) : Prop :=
+  istRaumOrt von ∧ p.val ∈ feinAmOrt z von
+
 -- pre_anmeldungFehlgeschlagen_tuerIstNachbar
--- frame_anmeldungFehlgeschlagen_tuerUnveraendert
+def pre_anmeldungFehlgeschlagen_tuerIstNachbar {orte : Finset Ort} (G : BipartiteOrtGraph orte) (von tuer : OrtSet orte) : Prop :=
+  istRaumOrt von ∧ istTuerOrt tuer ∧ G.Adj von tuer
+
+-- frame_anmeldungFehlgeschlagen_tuerenUnveraendert
+def frame_anmeldungFehlgeschlagen_tuerenUnveraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) : Prop :=
+  ∀ o : OrtSet orte, istTuerOrt o → z'.offen o = z.offen o
+
 -- frame_anmeldungFehlgeschlagen_belegungGrobUnveraendert
+def frame_anmeldungFehlgeschlagen_belegungGrobUnveraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) : Prop :=
+  ∀ o : OrtSet orte, grobAmOrt z' o = grobAmOrt z o
+
 -- frame_anmeldungFehlgeschlagen_belegungFeinUnveraendert
+def frame_anmeldungFehlgeschlagen_belegungFeinUnveraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) : Prop :=
+  ∀ o : OrtSet orte, feinAmOrt z' o = feinAmOrt z o
+
 -- frame_anmeldungFehlgeschlagen_offenUnveraendert
+def frame_anmeldungFehlgeschlagen_offenUnveraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) : Prop :=
+  ∀ o : OrtSet orte, z'.offen o = z.offen o
+
 -- frame_anmeldungFehlgeschlagen_letzterRaumUnveraendert
--- frame_anmeldungFehlgeschlagen_authentifizierungUnveraendert
+def frame_anmeldungFehlgeschlagen_letzterRaumUnveraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) : Prop :=
+  ∀ p : Person, z'.letzterRaum p = z.letzterRaum p
 
 -- pre_tuerFaelltZu_tuerIstOffen
+def pre_tuerFaelltZu_tuerIstOffen {orte : Finset Ort} {personen : Finset Person} (z : Zustand orte personen) (tuer : OrtSet orte) : Prop :=
+  istTuerOrt tuer ∧ z.offen tuer = true
+
 -- pre_tuerFaelltZu_tuerIstLeer
+def pre_tuerFaelltZu_tuerIstLeer {orte : Finset Ort} {personen : Finset Person} (z : Zustand orte personen) (tuer : OrtSet orte) : Prop :=
+  istTuerOrt tuer ∧ feinAmOrt z tuer = ∅
+
 -- post_tuerFaelltZu_tuerGeschlossen
+def post_tuerFaelltZu_tuerGeschlossen {orte : Finset Ort} {personen : Finset Person} (z' : Zustand orte personen) (tuer : OrtSet orte) : Prop :=
+  istTuerOrt tuer ∧ z'.offen tuer = false
+
 -- frame_tuerFaelltZu_andereTuerenUnveraendert
+def frame_tuerFaelltZu_andereTuerenUnveraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) (tuer : OrtSet orte) : Prop :=
+  ∀ o : OrtSet orte, istTuerOrt o → o ≠ tuer →
+    z'.offen o = z.offen o
+
 -- frame_tuerFaelltZu_belegungUnveraendert
+def frame_tuerFaelltZu_belegungUnveraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) : Prop :=
+  (∀ o : OrtSet orte, grobAmOrt z' o = grobAmOrt z o) 
+  ∧
+  (∀ o : OrtSet orte, feinAmOrt z' o = feinAmOrt z o)
+
 -- frame_tuerFaelltZu_letzterRaumUnveraendert
--- frame_tuerFaelltZu_authentifizierungUnveraendert
+def frame_tuerFaelltZu_letzterRaumUnveraendert {orte : Finset Ort} {personen : Finset Person} (z z' : Zustand orte personen) : Prop :=
+  ∀ p : Person, z'.letzterRaum p = z.letzterRaum p
 
 -- pre_move3_anmelden
 -- pre_move3_anmeldungFehlgeschlagen
@@ -500,9 +685,9 @@ abbrev room1 := Ort.Raum (Raum.Zimmer 1)
 abbrev room2 := Ort.Raum (Raum.Zimmer 2)
 abbrev room3 := Ort.Raum Raum.Garten
 
-abbrev door1 : Ort := Ort.Tuer (Tuer.tuer (Authentifizierung.auth 1))
+abbrev door1 : Ort := Ort.Tuer (Tuer.tuer 1)
 
-abbrev door2 : Ort := Ort.Tuer (Tuer.tuer (Authentifizierung.auth 2))
+abbrev door2 : Ort := Ort.Tuer (Tuer.tuer 2)
 
 abbrev myOrts : Finset Ort :=
   ∅ |> insert room1
@@ -566,8 +751,8 @@ def initZustand : Zustand myOrts myPersonen where
   belegungFein := initBelegung
   offen := fun o =>
     match o.val with
-    | Ort.Tuer (Tuer.tuer (Authentifizierung.auth 1)) => false
-    | Ort.Tuer (Tuer.tuer (Authentifizierung.auth 2)) => true
+    | Ort.Tuer (Tuer.tuer 1) => false
+    | Ort.Tuer (Tuer.tuer 2) => true
     | _ => false
   letzterRaum := fun _ => Raum.Garten
   grob_gueltig := by
@@ -583,8 +768,8 @@ def initZustand : Zustand myOrts myPersonen where
     | Tuer t =>
       intro hpersonen
       have ht :
-          t = Tuer.tuer (Authentifizierung.auth 1) ∨
-          t = Tuer.tuer (Authentifizierung.auth 2) := by
+          t = Tuer.tuer 1 ∨
+          t = Tuer.tuer 2 := by
         simpa [myOrts, door1, door2, room1, room2, room3, or_comm] using hv
       rcases ht with hdoor1 | hdoor2
       · subst t
