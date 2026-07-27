@@ -166,6 +166,11 @@ structure Zustand (orte : Finset Ort) (personen : Finset Person) where
 
 /-
   Invarianten: was trotz Veränderung gleich bleibt
+
+  pre_   = Vorbedingung vor der Aktion
+  post_  = Bedingung, die nach der Aktion gilt
+  frame_ = Teil des Zustands bleibt unverändert
+  inv_   = Eigenschaft, die in jedem gültigen Zustand gilt -> liegen teils auch in den Graphen-Strukturen direkt als Eigenschaft drin
 -/
 -- inv_genauEinGarten
 -- inv_einePersonGenauEinOrtGrob
@@ -193,15 +198,15 @@ structure Zustand (orte : Finset Ort) (personen : Finset Person) where
 -- post_moveGrob_personImZielraum
 -- post_moveGrob_personAusQuellraumEntfernt
 -- post_moveGrob_grobBelegungAktualisiert
--- post_moveGrob_alleAnderenGrobBelegungenUnveraendert
--- post_moveGrob_feinBelegungUnveraendert
--- post_moveGrob_offenUnveraendert
--- post_moveGrob_letzterRaumUnveraendert
 -- post_moveGrob_keineTeleportationGrob
 -- post_moveGrob_personNieInTuerGrob
--- post_moveGrob_einePersonGenauEinOrt
--- post_moveGrob_frameConditions
--- post_moveGrob_personNichtInTuer
+-- post_moveGrob_einePersonGenauEinOrtGrob
+-- post_moveGrob_einePersonGenauEinOrtFein
+-- post_moveGrob_personNichtInTuerGrob
+-- frame_moveGrob_alleAnderenGrobBelegungenUnveraendert
+-- frame_moveGrob_feinBelegungUnveraendert
+-- frame_moveGrob_offenUnveraendert
+-- frame_moveGrob_letzterRaumUnveraendert
 
 -- pre_betreteTuer_personImQuellraum
 -- pre_betreteTuer_tuerIstNachbar
@@ -212,10 +217,7 @@ structure Zustand (orte : Finset Ort) (personen : Finset Person) where
 -- post_betreteTuer_personAusRaumEntfernt
 -- post_betreteTuer_letzterRaumAktualisiert
 -- post_betreteTuer_keineTeleportationFein
--- post_betreteTuer_grobBelegungUnveraendert
--- post_betreteTuer_offenUnveraendert
--- post_betreteTuer_alleAnderenFeinenBelegungenUnveraendert
--- post_betreteTuer_frameConditions
+-- frame_betreteTuer_alleAnderenFeinenBelegungenUnveraendert
 
 -- pre_verlasseTuer_personInTuer
 -- pre_verlasseTuer_tuerIstTuer
@@ -226,15 +228,11 @@ structure Zustand (orte : Finset Ort) (personen : Finset Person) where
 -- post_verlasseTuer_personImZielraum
 -- post_verlasseTuer_personAusTuerEntfernt
 -- post_verlasseTuer_keineTeleportationFein
--- post_verlasseTuer_grobBelegungUnveraendert
--- post_verlasseTuer_offenUnveraendert
--- post_verlasseTuer_letzterRaumUnveraendert
--- post_verlasseTuer_alleAnderenFeinenBelegungenUnveraendert
--- post_verlasseTuer_frameConditions
+-- frame_verlasseTuer_grobBelegungVeraendert
+-- frame_verlasseTuer_alleAnderenFeinenBelegungenUnveraendert
 
 -- pre_move2_raeumeSindDurchTuerVerbunden
 -- pre_move2_betreteOderVerlasseTuer
--- post_move2_betreteTuerGrobUnveraendert
 -- post_move2_verlasseTuerGrobBewegt
 -- post_move2_keineTeleportationFein
 -- post_move2_keineTeleportationGrob
@@ -242,7 +240,9 @@ structure Zustand (orte : Finset Ort) (personen : Finset Person) where
 -- post_move2_betreteTuerFeinAktualisiert
 -- post_move2_verlasseTuerFeinAktualisiert
 -- post_move2_letzterRaumKorrektBehandelt
--- post_move2_frameConditions
+-- frame_move2_grobBelegungVeraendert
+-- frame_move2_offenUnveraendert
+-- frame_move2_betreteTuerGrobUnveraendert
 
 -- pre_anmelden_authentifizierungGueltig
 -- pre_anmelden_authentifizierungsGeraetGehoertZurTuer
@@ -250,49 +250,47 @@ structure Zustand (orte : Finset Ort) (personen : Finset Person) where
 -- pre_anmelden_personIstBewohner
 -- pre_anmelden_tuerIstNachbar
 -- post_anmelden_tuerGeoeffnet
--- post_anmelden_belegungGrobUnveraendert
--- post_anmelden_belegungFeinUnveraendert
--- post_anmelden_letzterRaumUnveraendert
--- post_anmelden_andereTuerenUnveraendert
 -- post_anmelden_authentifizierungGespeichert
--- post_anmelden_frameConditions
+-- frame_anmelden_belegungGrobUnveraendert
+-- frame_anmelden_belegungFeinUnveraendert
+-- frame_anmelden_letzterRaumUnveraendert
+-- frame_anmelden_andereTuerenUnveraendert
 
 -- pre_anmeldungFehlgeschlagen_personImRaum
 -- pre_anmeldungFehlgeschlagen_tuerIstNachbar
--- post_anmeldungFehlgeschlagen_tuerUnveraendert
--- post_anmeldungFehlgeschlagen_frameConditions
--- post_anmeldungFehlgeschlagen_belegungGrobUnveraendert
--- post_anmeldungFehlgeschlagen_belegungFeinUnveraendert
--- post_anmeldungFehlgeschlagen_offenUnveraendert
--- post_anmeldungFehlgeschlagen_letzterRaumUnveraendert
--- post_anmeldungFehlgeschlagen_authentifizierungUnveraendert
+-- frame_anmeldungFehlgeschlagen_tuerUnveraendert
+-- frame_anmeldungFehlgeschlagen_belegungGrobUnveraendert
+-- frame_anmeldungFehlgeschlagen_belegungFeinUnveraendert
+-- frame_anmeldungFehlgeschlagen_offenUnveraendert
+-- frame_anmeldungFehlgeschlagen_letzterRaumUnveraendert
+-- frame_anmeldungFehlgeschlagen_authentifizierungUnveraendert
 
 -- pre_tuerFaelltZu_tuerIstOffen
 -- pre_tuerFaelltZu_tuerIstLeer
 -- post_tuerFaelltZu_tuerGeschlossen
--- post_tuerFaelltZu_andereTuerenUnveraendert
--- post_tuerFaelltZu_belegungUnveraendert
--- post_tuerFaelltZu_letzterRaumUnveraendert
--- post_tuerFaelltZu_authentifizierungUnveraendert
+-- frame_tuerFaelltZu_andereTuerenUnveraendert
+-- frame_tuerFaelltZu_belegungUnveraendert
+-- frame_tuerFaelltZu_letzterRaumUnveraendert
+-- frame_tuerFaelltZu_authentifizierungUnveraendert
 
 -- pre_move3_anmelden
 -- pre_move3_anmeldungFehlgeschlagen
 -- pre_move3_move2
 -- pre_move3_tuerFaelltZu
 -- post_move3_anmelden_tuerGeoeffnet
--- post_move3_anmelden_belegungGrobUnveraendert
--- post_move3_anmelden_belegungFeinUnveraendert
--- post_move3_anmelden_letzterRaumUnveraendert
--- post_move3_anmeldungFehlgeschlagen_tuerUnveraendert
--- post_move3_anmeldungFehlgeschlagen_belegungGrobUnveraendert
--- post_move3_anmeldungFehlgeschlagen_belegungFeinUnveraendert
--- post_move3_anmeldungFehlgeschlagen_letzterRaumUnveraendert
--- post_move3_anmeldungFehlgeschlagen_authentifizierungUnveraendert
+-- frame_move3_anmelden_belegungGrobUnveraendert
+-- frame_move3_anmelden_belegungFeinUnveraendert
+-- frame_move3_anmelden_letzterRaumUnveraendert
+-- frame_move3_anmeldungFehlgeschlagen_tuerUnveraendert
+-- frame_move3_anmeldungFehlgeschlagen_belegungGrobUnveraendert
+-- frame_move3_anmeldungFehlgeschlagen_belegungFeinUnveraendert
+-- frame_move3_anmeldungFehlgeschlagen_letzterRaumUnveraendert
+-- frame_move3_anmeldungFehlgeschlagen_authentifizierungUnveraendert
 -- post_move3_tuerFaelltZu_tuerGeschlossen
--- post_move3_tuerFaelltZu_andereTuerenUnveraendert
--- post_move3_tuerFaelltZu_belegungGrobUnveraendert
--- post_move3_tuerFaelltZu_belegungFeinUnveraendert
--- post_move3_tuerFaelltZu_letzterRaumUnveraendert
+-- frame_move3_tuerFaelltZu_andereTuerenUnveraendert
+-- frame_move3_tuerFaelltZu_belegungGrobUnveraendert
+-- frame_move3_tuerFaelltZu_belegungFeinUnveraendert
+-- frame_move3_tuerFaelltZu_letzterRaumUnveraendert
 -- post_move3_einePersonGenauEinOrtGrob
 -- post_move3_einePersonGenauEinOrtFein
 -- post_move3_tuerImmerOffenWennPersonEnthalten
