@@ -2,14 +2,14 @@ abstract sig Bool {}
 one sig True, False extends Bool {}
 
 abstract sig PERSON{
-var	letzterRaum: lone RAUM
+	var	letzterRaum: lone RAUM
 }
 sig BEWOHNER extends PERSON {}
 sig GAST extends PERSON {}
 
 abstract sig ORT {
-var 	personenImOrtGrob: set PERSON,
-var	personenImOrtFein: set PERSON,
+	var 	personenImOrtGrob: set PERSON,
+	var	personenImOrtFein: set PERSON,
 	nachbarn: some ORT
 }
 
@@ -17,7 +17,6 @@ sig RAUM extends ORT {}{
 	nachbarn in TUER
 }
 
-sig ZIMMER extends RAUM{}
 sig GARTEN extends RAUM{}{
 	one nachbarn //Garten soll nur einen Zugang zum Haus haben
 }
@@ -25,7 +24,7 @@ sig GARTEN extends RAUM{}{
 sig AUTHENTIFIZIERUNG{}
 
 sig TUER extends ORT{
-var	offen: one Bool,
+	var	offen: one Bool,
 	authentifizierung: one AUTHENTIFIZIERUNG,
 }{
 	nachbarn in RAUM
@@ -104,25 +103,27 @@ pred stutterGrob{
 //#################### invarianten der Verfeinerung -- alles was im feinen Modell funktioniert, muss auch im groben Modell funktionieren
 
 pred betreteTuer[p: PERSON, von: RAUM, t: TUER]{
+	//pre
 	p in von.personenImOrtFein
 	t in von.nachbarn
 	t.offen in True
-
+	//post
 	von.personenImOrtFein' = von.personenImOrtFein - p
 	t.personenImOrtFein' = t.personenImOrtFein + p
 	p.letzterRaum' = von
-
+	//frame
 	all o: ORT - (von + t) | o.personenImOrtFein' = o.personenImOrtFein
 }
 
 pred verlasseTuer[p: PERSON, nach: RAUM, t: TUER]{
+	//pre
 	p in t.personenImOrtFein
 	nach in t.nachbarn
 	p.letzterRaum != nach
-
+	//post
 	t.personenImOrtFein' = t.personenImOrtFein - p
 	nach.personenImOrtFein' = nach.personenImOrtFein + p
-
+	//frame
 	all o: ORT - (nach + t) | o.personenImOrtFein' = o.personenImOrtFein
 }
 
@@ -133,7 +134,10 @@ pred vorbedingungenMove2 [r1, r2: RAUM, t: TUER] {
 }
 
 pred move2 {
-	some p: PERSON, r1, r2: RAUM, t: TUER | ((betreteTuer[p, r1, t] and stutterGrob) or (verlasseTuer[p, r2, t] and moveGrob[p, r1, r2])) and vorbedingungenMove2[r1, r2, t]
+	some p: PERSON, r1, r2: RAUM, t: TUER | 
+		((betreteTuer[p, r1, t] and stutterGrob) or 
+		(verlasseTuer[p, r2, t] and moveGrob[p, r1, r2])) and 
+		vorbedingungenMove2[r1, r2, t]
 }
 
 pred stutter {
@@ -155,13 +159,15 @@ run show
 
 assert keineTeleportation_GROB {
 	always all p: PERSON, von, nach: ORT | 
-	(p in von.personenImOrtGrob and p in nach.personenImOrtGrob' implies (nach in von.nachbarn.nachbarn)) 
+		(p in von.personenImOrtGrob and 
+		p in nach.personenImOrtGrob' implies 
+		(nach in von.nachbarn.nachbarn)) 
 }
 
 assert keineTeleportation_FEIN {
 	always all p: PERSON, von, nach: ORT | 
-	(p in von.personenImOrtFein and p in nach.personenImOrtFein' implies (nach in von.nachbarn)) or
-	(p in von.personenImOrtFein and p in von.personenImOrtFein') //stutter
+		(p in von.personenImOrtFein and p in nach.personenImOrtFein' implies (nach in von.nachbarn)) or
+		(p in von.personenImOrtFein and p in von.personenImOrtFein') //stutter
 }
 
 assert personIstNieInTuer_GROB {
@@ -171,7 +177,10 @@ assert personIstNieInTuer_GROB {
 
 assert gleichesErgebnisInFreinUndGrob{
 	always all p: PERSON, von: ORT |
-		(p in von.personenImOrtGrob and p in von.personenImOrtFein) implies (p in von.personenImOrtGrob' and p in von.personenImOrtFein') or (p in von.personenImOrtGrob' and p in von.nachbarn.personenImOrtFein') or (p in von.nachbarn.nachbarn.personenImOrtGrob' and p in von.nachbarn.nachbarn.personenImOrtFein')
+		(p in von.personenImOrtGrob and p in von.personenImOrtFein) implies 
+		(p in von.personenImOrtGrob' and p in von.personenImOrtFein') or 
+		(p in von.personenImOrtGrob' and p in von.nachbarn.personenImOrtFein') or 
+		(p in von.nachbarn.nachbarn.personenImOrtGrob' and p in von.nachbarn.nachbarn.personenImOrtFein')
 }
 
 assert gleichesErgebnisInFreinUndGrob_V2 { //Hier gabe es die verbesserung, dass es nur einen Garten geben darf, da dies dre Anfangsraum für alle ist, die Personen aber auf diese zwei gärten initial unglecih aufgeteilt waren.
