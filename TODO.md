@@ -1,0 +1,2 @@
+- Dateinamen überprüfen in Doku
+- Projektstruktur überprüfen in Doku
