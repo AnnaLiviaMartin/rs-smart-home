@@ -21,14 +21,11 @@ sig GARTEN extends RAUM{}{
 	one nachbarn //Garten soll nur einen Zugang zum Haus haben
 }
 
-sig AUTHENTIFIZIERUNG{}
-
 sig TUER extends ORT{
-	var	offen: one Bool,
-	authentifizierung: one AUTHENTIFIZIERUNG,
+	var	offen: one Bool
 }{
 	nachbarn in RAUM
-	always offen = True
+//	always offen = True
 //	always #personenImOrtGrob = 0 //Damit keine Person im groben Modell ind er Tür stehen kann
 }
 
@@ -43,10 +40,6 @@ fact einePersonInGenauEinemOrt {
 		#(p.~personenImOrtGrob) = 1	and
 		#(p.~personenImOrtFein) = 1
 	)
-}
-
-fact jedeTuerHatEigenesAuthentifizierungsGeraet {
-	all disj t1, t2: TUER | t1.authentifizierung not in t2.authentifizierung
 }
 
 fact tuerImmerOffenWennPersonEnthalten{
@@ -78,7 +71,7 @@ pred init {
 	all p: PERSON | p in GARTEN.personenImOrtGrob
 	all p: PERSON | p in GARTEN.personenImOrtFein
 	all p: PERSON | p.letzterRaum = GARTEN
-//	all t: TUER | t.offen = False
+	all t: TUER | t.offen = False
 //	no AUTHENTICATION.authentifiziertePersone
 }
 
@@ -140,22 +133,64 @@ pred move2 {
 		vorbedingungenMove2[r1, r2, t]
 }
 
+pred move3 {
+	some p: PERSON, t: TUER |
+		(oeffneTuer[p, t] and stutter) or (move2 and tuerBleibtOffenOderFaelltZu) //frameconsition mit in die Klammer, weil sich das mit oeffneTuer beißt
+// stutter hier habe ich gebraucht, weil Personen wieder Random spawnen konnten
+
+	// Frame
+	
+}
+
 pred stutter {
 	all o: ORT | o.personenImOrtFein' = o.personenImOrtFein
 	all o: ORT | o.personenImOrtGrob' = o.personenImOrtGrob
 	all p: PERSON | p.letzterRaum' =  p.letzterRaum
 }
 
-pred show {
+fact show {
 	init
-	always move2
+	always move3 
+//	or stutter //Stuttervorgänge werden stand jetzt im feinen Modell nicht ausgeführt, Das Modell ist also gezwungen, bei jedem Schritt eine Person im feinen Modell zu bewegen. 
 }
 
-//run show for exactly 2 PERSON, 1 GAST, 1 BEWOHNER, exactly 2 ZIMMER, exactly 1 GARTEN, 2 AUTHENTIFIZIERUNG, exactly 2 TUER, exactly 3 RAUM
+//run show for exactly 2 PERSON, 1 GAST, 1 BEWOHNER, exactly 1 GARTEN, exactly 2 TUER, exactly 3 RAUM
 
-run show
+//run show
+
+//################# Operationen ##################
+pred oeffneTuer [p: PERSON, tuer: TUER] {
+	//pre
+	p in BEWOHNER
+	tuer in p.~personenImOrtFein.nachbarn //Tür muss nachbar zum Raum sein, in dem die person sich aufhält
+	tuer.offen = False
+	//post
+	tuer.offen' = True
+	//frame
+//	all t: TUER | t.offen = False implies t.offen' = False
+	all t: TUER - tuer | t.offen' = t.offen
+}
+
+pred tuerBleibtOffenOderFaelltZu {
+	all t: TUER | t.offen = False implies t.offen' = False //da ich nicht definiert habe, dass eine Tür von true auf false springen kann, ist die Lücke offen geblieben, damit die Tür sich schließen kann, sofern sie offen ist.
+}
 
 //################ tests ######################
+
+assert personNurInEinemOrt {
+	always all p: PERSON |
+		#(p.~personenImOrtFein) = 1
+}
+
+assert geschlosseneTuerIstLeer {
+	always all t: TUER |
+		t.offen = False implies no t.personenImOrtFein
+}
+
+assert bewegungDurchOffeneTuer {
+	always all p: PERSON, t: TUER |
+		p in t.personenImOrtFein implies t.offen = True
+}
 
 assert keineTeleportation_GROB {
 	always all p: PERSON, von, nach: ORT | 
@@ -188,9 +223,27 @@ assert gleichesErgebnisInFreinUndGrob_V2 { //Hier gabe es die verbesserung, dass
 		p in r.personenImOrtFein implies p in r.personenImOrtGrob
 }
 
+assert nurBewohnerKannTuerOeffnen {
+	always all t: TUER |
+		t.offen = False and t.offen' = True
+		implies some b: BEWOHNER |
+		b in t.nachbarn.personenImOrtFein
+}
+
+assert tuerIstGeschlossenBisBewohnerSieOeffnet { //evt was mit unitl ausprobieren
+
+}
+
+
+check personNurInEinemOrt for 4
+check geschlosseneTuerIstLeer for 4 // Bruahct man das, wenn es bereits als axiom definiert ist?
+check bewegungDurchOffeneTuer for 4
 check keineTeleportation_GROB for 4
 check keineTeleportation_FEIN for 4
 check personIstNieInTuer_GROB for 4
 check gleichesErgebnisInFreinUndGrob for 4
 check gleichesErgebnisInFreinUndGrob_V2 for 4
+check nurBewohnerKannTuerOeffnen for 4
+
+// ToDo : Checken, warum kein newConfic möglich ist ; Türen gehen manchmal automatisch wieder auf ohne autentifizierung ; 
 
