@@ -82,7 +82,7 @@ Es gibt nun unterschiedliche Zoom-Ebenen, auf denen wir unterschiedlich viel vom
 
 ## Fachliche Beschreibung des Systems
 
-Aus dem [Gebäudeplan](#raumplan-und-räumliche-struktur) und den [Detailebenen des Besuchs](#beispiel-detailebenen-des-besuchs) ergeben sich nun verschiedene beteiligte Elemente in der Domäne. Diese werden nachfolgend erläutert.
+Aus dem [Gebäudeplan](#raumplan-und-räumliche-struktur) und den [Detailebenen des Besuchs](#beispiel-detailebenen-des-besuchs) ergeben sich nun verschiedene beteiligte Elemente in der Domäne sowie realitätserhaltende Grundregeln. Diese werden nachfolgend erläutert.
 
 ### Beteiligte Elemente
 
@@ -101,19 +101,17 @@ Das Zugangskontrollsystem, wie oben beschrieben, hat auf allgemeiner Ebene versc
 
 Darüber hinaus gibt es bestimmte Regeln, die in der Realität immer gelten. Diese sollten daher mit modelliert werden. Die wichtigsten Grundregeln sollten als verständliche Anforderungen formuliert werden:
 
-* Jede Person befindet sich immer genau an einem Ort.
-* Eine Tür verbindet genau zwei Räume.
-* Eine Tür kann geöffnet oder geschlossen sein.
-* Eine Person darf eine Tür nur bei geöffneter Tür passieren.
-* Der Bewegungszustand darf keine Teleportation ermöglichen.
+- Jede Person befindet sich immer genau an einem Ort.
+- Eine Tür verbindet genau zwei Räume.
+- Eine Tür kann geöffnet oder geschlossen sein.
+- Eine Person darf eine Tür nur bei geöffneter Tür passieren.
+- Der Bewegungszustand darf keine Teleportation ermöglichen.
 
 Sollten diese Bedinungen verletzt werden, sind wohl weder Bernd noch Sandmännchen sicher und befinden sich in akuter diese-welt-existiert-so-nicht-gefahr. Wir schließen diese daher zur Wahrung eines realitätsnahen Ansatzes aus.
 
-## Abstraktes Datenmodell
+### Abstraktes Datenmodell
 
-Hier wird erklärt, aus welchen Objekten das System besteht und wie diese zusammenhängen.
-
-### Klassen- und Beziehungsdiagramm
+Es folgt ein Klassen- und Beziehungsdiagramm für die Grundkomponenten:
 
 ```plantuml
 @startuml
@@ -155,19 +153,15 @@ Ein Ort kann Personen enthalten und Nachbarn besitzen. Das Feld `nachbarn` besch
 **Türen und Räume**:
 Räume und Türen sind beide Orte. Dadurch können Personen im feinen Modell vorübergehend auch innerhalb einer Tür dargestellt werden. Eine Tür besitzt einen Öffnungszustand und genau ein Authentifizierungsgerät.
 
-## Zeit und Zustandsänderungen TODO
+### Zeit und Zustandsänderungen
 
-Das System besteht dabei nicht nur aus einem unveränderlichen Zustand, sondern aus einer Folge von Zuständen:
+Betrachten wir erneut das Beispiel aus [Detailebenen des Besuchs](#beispiel-detailebenen-des-besuchs). Hier wird deutlich, dass ein einfaches "in einen anderen Raum wechseln", kein atomarer Schritt ist. Vielmehr besteht das in den Raum wechseln (abhängig davon, auf welchem verfeinerungsgrad wir uns das Ganze ansehen) aus einer Reihe an Zustandsänderungen. Um das Modell korrekt modellieren zu können, ist es daher nötig, verschiedene Zustände modellieren zu können. Ein beispielhafter Zustandswechsel für das zweite Modell könnte daher sein:
 
 ```text
-Zustand 0  -- Bewegung -->  Zustand 1  -- Tür schließen --> Zustand 2
-
-todo als Bild beschreiben
+Zustand 0 (in Raum A) -- Bewegung -->  Zustand 1 (in Tür zwischen Raum A und Raum b) -- Tür passieren --> Zustand 2 (in Raum B)
 ```
 
-Beispielsweise möchte Bernd das Zimmer 1 betreten ... TODO
-
-Es muss daher möglich sein das System dahingehend zu modellieren. Für diese Modellierung nach Zuständen nutzen wir das Event B Modell/ Zustände ??
+Es muss daher möglich sein das System dahingehend zu modellieren.
 
 **PlantUML-Zustandsdiagramm**
 
@@ -188,14 +182,28 @@ InTuer --> InTuer : warten
 
 Wir haben daher unser Modell in verschiedene Verfeinerungsstufen eingeteilt. Deren Details und Erklärungen folgen nun.
 
-## Grobes Modell
+## Erstes grobes Modell
 Das grobe Modell beschreibt Bewegungen auf einer vereinfachten Ebene.
 
 Im groben Modell wird eine Bewegung direkt als Wechsel von einem Raum in einen anderen dargestellt. Die Tür wird dabei nicht als eigener Zwischenaufenthaltsort betrachtet. Es wird lediglich geprüft, ob eine geeignete offene Tür zwischen beiden Räumen existiert.
 
 **Beispiel**
 
-Bernd kann hier also ... TODO
+Bernd befindet sich gemeinsam mit Sandmännchen im Flur. Der Vorlesungsraum ist über eine Tür mit dem Flur verbunden. Die Tür ist geöffnet. Bernd möchte nun mit Sandmännchen vom Flur in den Vorlesungsraum gehen. Im groben Modell wird dieser Vorgang als eine einzige Zustandsänderung dargestellt:
+
+```text
+Flur  -- Bewegung durch offene Tür -->  Vorlesungsraum
+```
+
+Für Bernd und Sandmännchen bedeutet das, dass beide Personen aus dem Flur entfernt und anschließend dem Vorlesungsraum zugeordnet werden. Der Aufenthalt in der Tür wird dabei nicht gesondert modelliert.
+
+Der Wechsel ist nur möglich, wenn folgende Bedingungen erfüllt sind:
+
+- Die Person befindet sich im Ausgangsraum.
+- Der Zielraum ist mit dem Ausgangsraum durch eine Tür verbunden.
+- Die Tür ist geöffnet.
+- Die Bewegung erfolgt zwischen zwei direkt verbundenen Räumen.
+- Ist die Tür geschlossen, kann der nächste Raum nicht betreten werden.
 
 **Diagramm**
 
@@ -211,9 +219,9 @@ A -[dashed,bold]-> B : Tür ist offen
 @enduml
 ```
 
-In diesem Schritt ändern sich nur die Aufenthaltsmengen der beiden beteiligten Räume. Andere Räume, Türen und der letzte bekannte Raum einer Person bleiben unverändert.
+In diesem Schritt ändern sich daher nur die Aufenthaltsmengen der beiden beteiligten Räume. Andere Räume, Türen und der letzte bekannte Raum einer Person bleiben unverändert.
 
-## Feines Modell
+## Zweites verfeinertes Modell
 
 Das feine Modell stellt den Bewegungsablauf detaillierter dar. Eine Person bewegt sich in zwei Schritten:
 
@@ -222,7 +230,15 @@ Das feine Modell stellt den Bewegungsablauf detaillierter dar. Eine Person beweg
 
 **Beispiel**
 
-Bernd kann hier also ... TODO
+Bernd und Sandmännchen befinden sich gemeinsam im Flur. Der Vorlesungsraum ist über eine Tür mit dem Flur verbunden. Die Tür ist geöffnet. Im groben Modell wäre die Bewegung ein einzelner Schritt.
+
+Im zweiten Modell wird dieser Vorgang genauer dargestellt:
+
+```text
+Flur  ---->  Tür  ---->  Vorlesungsraum
+```
+
+Bernd und Sandmännchen verlassen also zunächst den Flur und betreten die geöffnete Tür. Für einen kurzen Übergangszustand befinden sie sich innerhalb der Tür. Anschließend verlassen sie die Tür und betreten den Vorlesungsraum.
 
 **Ablaufdiagramm**
 
@@ -252,64 +268,93 @@ Das Prädikat `betreteTuer` beschreibt den ersten Teil der Bewegung. Die Person 
 
 Das Prädikat `verlasseTuer` beschreibt den zweiten Teil der Bewegung. Die Person muss sich in der Tür befinden. Der Zielraum muss mit der Tür verbunden sein. Danach wird die Person aus der Tür entfernt und in den Zielraum aufgenommen.
 
-## Feineres Modell: Authentifizierung und Türsteuerung
+## Drittes feines Modell
 
-Eine weitere Verfeinerungsstufe schaut sich nun die Authentifizierung an...
+Das dritte Modell erweitert das zweite Modell um eine Authentifizierung an der Tür. In den bisherigen Modellen wurde vorausgesetzt, dass eine Tür bereits geöffnet ist. Im dritten Modell kann eine geschlossene Tür zunächst durch eine berechtigte Person geöffnet werden.
+
+Die Bewegung durch die Tür besteht weiterhin aus zwei Schritten:
+
+1. Die Tür wird authentifiziert und geöffnet.
+2. Die Person betritt und verlässt die Tür.
+
+Damit wird nun zusätzlich modelliert, wer eine Tür öffnen darf und unter welchen Bedingungen eine Bewegung möglich ist.
 
 **Beispiel**
 
-Bernd erklärt die unten stehenden Regeln...TODO
+Bernd befindet sich gemeinsam mit Sandmännchen im Flur. Sie möchten in Bernds Büro gehen. Die Tür zum Büro ist geschlossen. Bernd ist Bewohner der Hochschule und besitzt daher einen Transponder. Sandmännchen ist dagegen nur ein Gast und besitzt keine Berechtigung, eine geschlossene Tür zu öffnen.
 
-* Nur Bewohner:innen können sich anmelden.
-* Eine Anmeldung erfolgt an einer Tür.
-* Bei erfolgreicher Anmeldung wird die Tür geöffnet.
-* Bei einer fehlgeschlagenen Anmeldung bleibt der Zustand unverändert.
-* Das Öffnen einer Tür verändert keine anderen Türen.
+Bernd authentifiziert sich an der Tür. Da er Bewohner ist und die Authentifizierung erfolgreich ist, wird die Tür geöffnet. Nun können beide passieren.
 
 **Aktivitätsdiagramm**
 
 ```plantuml
 @startuml
-title Authentifizierung an einer Tür
+title Authentifizierung und Bewegung durch eine Tür
 
 start
 
-:Person befindet sich im Raum;
+:Person befindet sich im Ausgangsraum;
 :Person wählt eine Tür;
-:Authentifizierungsgerät prüfen;
 
-if (Person ist Bewohner:in?) then (ja)
-  :Tür öffnen;
-  :Bewegung ermöglichen;
+if (Tür ist geschlossen?) then (ja)
+  :Authentifizierungsgerät prüfen;
+
+  if (Person ist Bewohner:in?) then (ja)
+    :Transponder prüfen;
+    :Tür öffnen;
+  else (nein)
+    :Authentifizierung ablehnen;
+    :Tür bleibt geschlossen;
+    stop
+  endif
 else (nein)
-  :Anmeldung ablehnen;
-  :Tür bleibt unverändert;
+  :Tür ist bereits geöffnet;
 endif
+
+:betreteTuer;
+:Person befindet sich in der Tür;
+:verlasseTuer;
+:Person befindet sich im Zielraum;
 
 stop
 @enduml
+
 ```
 
-Die Dokumentation sollte anschließend erklären, welche Teile Vorbedingungen, Nachbedingungen und Frame Conditions sind TODO.
+Für das Ereignis authentifiziere gelten folgende **Vorbedingungen**:
 
-| Bereich | Bedeutung |
-| :--- | :--- |
-| **Vorbedingung** | Was vor der Aktion gelten muss |
-| **Nachbedingung** | Was nach der Aktion gilt |
-| **Frame Condition** | Was unverändert bleibt |
+- Die Person befindet sich in einem Raum neben der Tür.
+- Die ausgewählte Tür gehört zu diesem Raum.
+- Die Tür ist geschlossen.
+- Die Person versucht, sich an der Tür anzumelden.
+- Für eine erfolgreiche Authentifizierung muss zusätzlich gelten:
+  - Die Person ist Bewohner:in.
+  - Die Person besitzt eine gültige Berechtigung.
+  - Das Authentifizierungsgerät kann die Berechtigung prüfen.
+  - Für die Ereignisse betreteTuer und verlasseTuer gelten weiterhin die Vorbedingungen aus dem zweiten Modell. Insbesondere kann betreteTuer erst dann ausgeführt werden, wenn die Tür geöffnet ist.
 
-## Systemgarantien
+Nach einer **erfolgreichen Authentifizierung gelten folgende Nachbedingungen**:
 
-In diesem Kapitel werden die Eigenschaften beschrieben, die immer gelten sollen.
+- Die Tür ist geöffnet.
+- Die Person bleibt in ihrem bisherigen Raum.
+- Die Tür kann anschließend betreten werden.
+- Die Berechtigung der Person wird nicht verändert.
+- Andere Türen bleiben unverändert.
 
-- Das System enthält zu jedem Zeitpunkt genau einen Garten.
-- Jede Person muss sowohl im groben als auch im feinen Modell immer genau einem Ort zugeordnet sein.
-- Jede Tür besitzt genau zwei benachbarte Räume. Sie verbindet also einen Ausgangsraum mit einem Zielraum.
-- TODOs
+Schlägt die **Authentifizierung fehl, gelten folgende Nachbedingungen**:
+
+- Die Tür bleibt geschlossen.
+- Die Person bleibt im bisherigen Raum.
+- Die Person wird nicht in die Tür aufgenommen.
+- Andere Türen bleiben unverändert.
+- Die Berechtigung der Person wird nicht verändert.
 
 ## Konsistenz zwischen den Modellen
 
+Die drei Modell müssen nach Event-B ineinander überführbar sein. Ist etwas also im dritten Modell möglich, muss dieses von außen betrachtet beispielsweise auch im ersten Modell gültig sein. Hiermit kommen weitere Systemgarantien einher, welche genau diese Abwärts-/Aufwärtskompatibilität beschreiben. Das bedeutet, dass wenn eine Person im dritten Modell den Raum wechselt, dies kaskadierend auch für das zweite und erste Modell möglich sein muss. Umgedreht genauso: ist eine Bewegung im ersten Modell möglich, muss diese auch im zweiten und dritten Modell möglich sein.
+
 **Grundidee**
+
 Das grobe Modell überspringt den Aufenthalt in der Tür:
 
 ```text
@@ -330,17 +375,19 @@ Raum A  ---->  Tür (Authentifizierung nötig)  ---->  Raum B
 
 **Abbildung**
 
+Jeder zulässige Ablauf im feinen Modell muss daher mit dem groben Modell vereinbar sein. Der zusätzliche Zwischenzustand innerhalb der Tür darf also nicht zu einem anderen fachlichen Ergebnis führen. Die Verfeinerung ist erfolgreich, wenn beide Modelle nach Abschluss einer Bewegung dieselbe Raumzuordnung der Personen liefern.
+
 ```plantuml
 @startuml
-title Zusammenhang zwischen grobem und feinem Modell
+title Konsistenz unter den Modellen
 
-rectangle "Grobes Modell" as Grob {
+rectangle "Erstes Modell" as Eins {
   rectangle "Raum A" as GA
   rectangle "Raum B" as GB
   GA -[bold]-> GB : ein Schritt
 }
 
-rectangle "Feines Modell" as Fein {
+rectangle "Zweites Modell" as Zwei {
   rectangle "Raum A" as FA
   rectangle "Tür" as FT
   rectangle "Raum B" as FB
@@ -349,27 +396,41 @@ rectangle "Feines Modell" as Fein {
   FT -[bold]-> FB : verlasseTuer
 }
 
-Grob ..> Fein : Verfeinerung
+rectangle "Drittes Modell" as Drei {
+  rectangle "Raum A" as DA
+  rectangle "Tür" as DT
+  rectangle "Authentifizierung" as DO
+  rectangle "Raum B" as DB
+
+  DA -[bold]-> DT : betreteTuer
+  DT -[bold]-> DO : oeffneTuer
+  DO -[bold]-> DB : verlasseTuer
+}
+
+Eins ..> Zwei : Verfeinerung
+Zwei ..> Drei : Verfeinerung
 
 @enduml
 ```
 
-Jeder zulässige Ablauf im feinen Modell muss daher mit dem groben Modell vereinbar sein. Der zusätzliche Zwischenzustand innerhalb der Tür darf also nicht zu einem anderen fachlichen Ergebnis führen. Die Verfeinerung ist erfolgreich, wenn beide Modelle nach Abschluss einer Bewegung dieselbe Raumzuordnung der Personen liefern.
 
 ## Fazit und Ausblick
 
-Das Fazit sollte beantworten: TODO
-* Was wurde modelliert?
-* Welche Eigenschaften wurden überprüft?
-* Welche Rolle spielen Alloy und Lean?
-* Welche Erweiterungen wären möglich?
+In dieser Arbeit wurde ein Zugangskontrollsystem modelliert, in dem sich Personen zwischen verschiedenen Räumen bewegen können. Dabei wurden Räume, Türen, Personen, Berechtigungen und Authentifizierungsgeräte berücksichtigt.
 
-**Mögliche Erweiterungen:**
-* mehrere Gärten oder Außenbereiche
-* unterschiedliche Berechtigungsstufen
-* mehrere Authentifizierungsgeräte
-* Türen mit automatischem Schließen
-* gleichzeitige Bewegungen mehrerer Personen
-* Alarmzustände bei unberechtigtem Zutritt
-* zusätzliche Raumtypen
-* vollständige formale Beweise der Verfeinerung
+Das System wurde schrittweise in drei Modellen beschrieben. Das erste Modell stellt eine Bewegung direkt zwischen zwei Räumen dar. Im zweiten Modell wird der Aufenthalt einer Person innerhalb der Tür als Zwischenzustand ergänzt. Das dritte Modell erweitert den Bewegungsablauf um die Authentifizierung und das Öffnen geschlossener Türen.
+
+Für die Modelle wurden verschiedene Systemgarantien festgelegt. Dazu gehören unter anderem die eindeutige Zuordnung einer Person zu einem Ort, die Verbindung von Türen mit genau zwei Räumen sowie die Bedingung, dass geschlossene Türen nicht ohne Berechtigung passiert werden können. Außerdem wurde beschrieben, welche Zustände sich durch die einzelnen Ereignisse verändern dürfen und welche Systemteile unverändert bleiben müssen.
+
+Die drei Modelle beschreiben denselben fachlichen Vorgang mit unterschiedlich hoher Detailgenauigkeit. Das grobe Modell abstrahiert den Aufenthalt in der Tür. Das zweite Modell macht diesen Zwischenzustand sichtbar. Das dritte Modell ergänzt zusätzlich die Authentifizierung. Nach Abschluss einer Bewegung müssen die Modelle dasselbe fachliche Ergebnis liefern, auch wenn der Ablauf im feineren Modell aus mehreren Einzelschritten besteht.
+
+Als Erweiterungen des Modells wären unter anderem folgende Punkte möglich:
+
+- mehrere Gärten oder Außenbereiche,
+- unterschiedliche Berechtigungsstufen,
+- mehrere Authentifizierungsgeräte,
+- gleichzeitige Bewegungen mehrerer Personen,
+- Alarmzustände bei unberechtigtem Zutritt,
+- zusätzliche Raumtypen.
+
+Damit bildet das Modell eine vereinfachte, aber erweiterbare Grundlage für die formale Beschreibung eines Zugangskontrollsystems.
