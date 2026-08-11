@@ -1,4 +1,47 @@
-## Alloy-Modell und Analyse
+# Umsetzungsentscheidungen
+
+Dieses Dokument beschreibt die konkreten Modellierungs- und Implementierungsentscheidungen für das Smart-Home-System.
+
+Die fachlichen Anforderungen sind in der [Modellspezifikation](./Modellspezifikation.md) beschrieben. Dieses Dokument erklärt, wie diese Anforderungen in Alloy und Lean umgesetzt wurden.
+
+## Ziel der Umsetzung
+
+Ziel der Umsetzung ist es, die drei fachlichen Modelle formal abzubilden:
+
+1. das grobe Modell mit direkten Bewegungen zwischen Räumen,
+2. das erste verfeinerte Modell mit dem Aufenthalt in einer Tür,
+3. das zweite verfeinerte Modell mit Authentifizierung und Türsteuerung.
+
+Alloy wird verwendet, um mögliche Zustände und Abläufe automatisch zu untersuchen. Lean wird verwendet, um ausgewählte Eigenschaften formal zu beweisen.
+
+## Verwendete Werkzeuge
+
+### Alloy
+
+Alloy wird für die automatische Zustands- und Ablaufanalyse verwendet.
+
+Mit Alloy werden insbesondere folgende Eigenschaften untersucht:
+
+- Jede Person befindet sich genau an einem Ort.
+- Jede Tür verbindet genau zwei Räume.
+- Bewegungen sind nur über verbundene Räume möglich.
+- Geschlossene Türen können nicht ohne Authentifizierung passiert werden.
+- Ereignisse verletzen keine Systemgarantien.
+
+### Lean
+
+Lean wird für mathematische Beweise verwendet.
+
+In Lean werden insbesondere folgende Eigenschaften betrachtet:
+
+- Die Invarianten bleiben nach einer Bewegung erhalten.
+- Eine Person befindet sich nach einer Bewegung weiterhin genau an einem Ort.
+- Eine Tür verbindet weiterhin genau zwei Räume.
+- Eine fehlgeschlagene Authentifizierung verändert den Zustand nicht.
+- Die Verfeinerung liefert dasselbe fachliche Ergebnis wie das grobe Modell.
+
+## Alloy-Modelle
+
 Dieses Kapitel beschreibt, wie Alloy verwendet wird.
 
 ### Modellbestandteile
@@ -14,35 +57,25 @@ Dieses Kapitel beschreibt, wie Alloy verwendet wird.
 | **run** | Suche nach einem gültigen Beispiel |
 | **always** | Eigenschaft gilt in allen Zuständen |
 
-### Beispiel für eine Analyse
+### Abbildung der Objekte
 
-```alloy
-assert keineTeleportation_FEIN {
-    always all p: PERSON, von, nach: ORT |
-        (p in von.personenImOrtFein and
-         p in nach.personenImOrtFein')
-        implies nach in von.nachbarn
-}
+### Vereinfachungen und Grenzen
 
-check keineTeleportation_FEIN for 4
-```
+## Lean-Modelle
 
-**Verständliche Erklärung**
-Die Behauptung überprüft, dass eine Person nicht ohne eine entsprechende Verbindung von einem Ort zu einem anderen gelangen kann. Alloy sucht innerhalb einer festgelegten Modellgröße nach Gegenbeispielen. Wird kein Gegenbeispiel gefunden, gilt die Behauptung innerhalb dieses Suchraums als erfüllt. 
+Dieses Kapitel beschreibt, wie Lean verwendet wird.
 
-Wichtig ist dabei die Einschränkung: Ein erfolgreiches `check` ist bei Alloy kein allgemeiner mathematischer Beweis für alle möglichen Systemgrößen. Es bedeutet, dass innerhalb des gewählten Bereichs kein Gegenbeispiel gefunden wurde.
+### Abbildung der Objekte aus Alloy nach Lean
 
-## Lean-Modell und formale Beweise
-Der Aufbau sollte parallel zum Alloy-Kapitel erfolgen.
+### Definition von Zuständen
 
-**Empfohlene Unterkapitel**
-* Abbildung der Objekte aus Alloy nach Lean
-* Definition von Zuständen
-* Definition von Übergängen
-* Formulierung der Invarianten
-* Beweis ausgewählter Eigenschaften
+### Definition von Übergängen
 
-**Unterschiede zwischen Alloy und Lean**
+### Formulierung der Invarianten
+
+### Beweis ausgewählter Eigenschaften
+
+## Unterschiede zwischen Alloy und Lean**
 *Vergleichstabelle*
 
 | Alloy | Lean |
@@ -52,24 +85,3 @@ Der Aufbau sollte parallel zum Alloy-Kapitel erfolgen.
 | `check` | `theorem` beziehungsweise `lemma` |
 | begrenzter Suchraum | grundsätzlich allgemeiner Beweis |
 | Modellprüfung | interaktives beziehungsweise automatisiertes Beweisen |
-
-**Beispielhafte Struktur**
-
-```text
-Zustand
- ├── Personen
- ├── Räume
- ├── Türen
- └── Öffnungszustände
-
-Übergang
- ├── Tür betreten
- ├── Tür verlassen
- ├── Anmeldung
- └── Tür schließen
-
-Eigenschaften
- ├── Jede Person ist genau an einem Ort
- ├── Keine Teleportation
- └── Grobes und feines Modell bleiben konsistent
-```
