@@ -35,7 +35,7 @@ Ein beispielhafter Raumplan könnte für ein öffentliches Gebäude so aussehen 
 
 ![Raumplan an der Hochschule RheinMain, Gebäude D](pictures/smart-home-Hausplan.drawio.png)
 
-Der Zugang zum Gebäude erfolgt über eine Außenanlage beziehungsweise einen Garten. Dieser Bereich bildet den Ausgangspunkt für die Personen, bevor sie das Gebäude betreten.
+Die im System betrachteten Räume werden in zwei Arten unterteilt: Gärten und Zimmer. Der Garten bildet den Außenbereich und damit den Ausgangspunkt für Personen, die das Gebäude betreten möchten. Zimmer beschreiben die innerhalb des Gebäudes liegenden Bereiche, beispielsweise Flure, Vorlesungsräume oder Büros.
 
 Das Gebäude besteht aus mehreren Bereichen:
 
@@ -94,6 +94,8 @@ Das Zugangskontrollsystem, wie oben beschrieben, hat auf allgemeiner Ebene versc
 | Bewohner:in | Eine Person mit dauerhafter Berechtigung für den Zutritt |
 | Gast | Eine Person ohne dauerhafte Berechtigung |
 | Raum | Ein Bereich, in dem sich Personen aufhalten können |
+| Zimmer | Ein Raum, im inneren des Gebäudes |
+| Garten | Ein Raum, außerhalb des Gebäudes |
 | Tür | Verbindet zwei Räume |
 | Authentifizierung | Technische Einrichtung zur Identitäts- oder Berechtigungsprüfung |
 
