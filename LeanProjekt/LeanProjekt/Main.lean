@@ -222,48 +222,79 @@ def moveGrobSchritt {orte : Finset Ort} (G : SimpleGraph (OrtSet orte)) (offen :
 /-
   Beweise
 -/
+-- TODO: Türset statt ortset #########
 
 -- Person wurde aus dem Ausgangsort entfernt wenn hpre erfüllt ist
-theorem moveGrob_person_nicht_in_von {orte : Finset Ort} (G : SimpleGraph (OrtSet orte)) (offen : OrtSet orte → Bool) (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) (hpre : pre_moveGrobMitTuer G offen p von nach b) : p ∉ personenImOrt (moveGrobBelegung p von nach b) von := by
-  rcases hpre with ⟨hpVon, hVonNach⟩
-  simp [moveGrobBelegung, setzeBelegung, personenImOrt, hVonNach]
+theorem moveGrob_person_nicht_in_von {orte : Finset Ort} (G : SimpleGraph (OrtSet orte)) (offen : OrtSet orte → Bool) (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte)  :
+    pre_moveGrobMitTuer G offen p von nach b → p ∉ personenImOrt (moveGrobBelegung p von nach b) von := by
+  intro hpre
+  rcases hpre with ⟨hpVon, hVonNach, hTür⟩
+  simp [
+    moveGrobBelegung,
+    setzeBelegung,
+    personenImOrt,
+    hVonNach
+  ]
 
 -- Alle anderen Orte bleiben unverändert
-theorem moveGrob_frame {orte : Finset Ort} (p : Person) (von nach o : OrtSet orte) (b : Belegung_safe orte) (hVon : o ≠ von) (hNach : o ≠ nach) : personenImOrt (moveGrobBelegung p von nach b) o = personenImOrt b o := by
-  simp [moveGrobBelegung, setzeBelegung, personenImOrt, hVon, hNach]
+theorem moveGrob_frame {orte : Finset Ort} (p : Person) (von nach o : OrtSet orte) (b : Belegung_safe orte) :
+  o ≠ von → o ≠ nach → personenImOrt (moveGrobBelegung p von nach b) o = personenImOrt b o := by
+  intro hVon hNach
+  simp [
+    moveGrobBelegung,
+    setzeBelegung,
+    personenImOrt,
+    hVon,
+    hNach
+  ]
 
 -- Nach Bewegung enthält Ausgangsort dieselben Personen - pPerson
-theorem moveGrob_belegung_von {orte : Finset Ort} (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) (hVonNach : von ≠ nach) : personenImOrt (moveGrobBelegung p von nach b) von = (personenImOrt b von).erase p := by
-  simp [moveGrobBelegung, setzeBelegung, personenImOrt, hVonNach]
+theorem moveGrob_belegung_von {orte : Finset Ort} (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) :
+    von ≠ nach → personenImOrt (moveGrobBelegung p von nach b) von = (personenImOrt b von).erase p := by
+  intro hVonNach
+  simp [
+    moveGrobBelegung,
+    setzeBelegung,
+    personenImOrt,
+    hVonNach
+  ]
 
 -- Nach Bewegung enthält Zielort vorherige Personen + p.
-theorem moveGrob_belegung_nach {orte : Finset Ort} (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) (hVonNach : von ≠ nach) : personenImOrt (moveGrobBelegung p von nach b) nach = insert p (personenImOrt b nach) := by
-  have hNachVon : nach ≠ von := Ne.symm hVonNach
-  simp [moveGrobBelegung, setzeBelegung, personenImOrt]
+theorem moveGrob_belegung_nach {orte : Finset Ort} (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) : 
+  von ≠ nach → personenImOrt (moveGrobBelegung p von nach b) nach = insert p (personenImOrt b nach) := by
+  intro hVonNach
+  simp [
+    moveGrobBelegung,
+    setzeBelegung,
+    personenImOrt
+  ]
 
 -- Person befindet sich im Zielort wenn hpre erfüllt wurde
-theorem moveGrob_person_in_nach {orte : Finset Ort} (p : Person) (von nach : OrtSet orte) (G : SimpleGraph (OrtSet orte)) (offen : OrtSet orte → Bool) (b : Belegung_safe orte) (hpre : pre_moveGrobMitTuer G offen p von nach b) : p ∈ personenImOrt (moveGrobBelegung p von nach b) nach := by
+theorem moveGrob_person_in_nach {orte : Finset Ort} (p : Person) (von nach : OrtSet orte) (G : SimpleGraph (OrtSet orte)) (offen : OrtSet orte → Bool) (b : Belegung_safe orte) : pre_moveGrobMitTuer G offen p von nach b → p ∈ personenImOrt (moveGrobBelegung p von nach b) nach := by
+  intro hpre
   rcases hpre with ⟨hpVon, hVonNach, t, htuer, hAdjVon, hAdjNach, hOffen⟩
   rw [moveGrob_belegung_nach p von nach b hVonNach]
   simp
 
 -- aus hpre folgt dass es eine offene Tür gibt, die von mit nach verbindet
-theorem pre_moveGrobMitTuer_enthaelt_offene_tuer {orte : Finset Ort} (G : SimpleGraph (OrtSet orte)) (offen : OrtSet orte → Bool) (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) (hpre : pre_moveGrobMitTuer G offen p von nach b) :
+theorem pre_moveGrobMitTuer_enthaelt_offene_tuer {orte : Finset Ort} (G : SimpleGraph (OrtSet orte)) (offen : OrtSet orte → Bool) (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) : pre_moveGrobMitTuer G offen p von nach b →
     ∃ t : OrtSet orte,
       istTuer t.1 ∧
       G.Adj von t ∧
       G.Adj nach t ∧
       offen t = true := by
+  intro hpre
   rcases hpre with ⟨hpVon, hVonNach, t, htuer, hVonT, hNachT, hOffen⟩
   exact ⟨t, htuer, hVonT, hNachT, hOffen⟩
 
 -- Wenn b' aus b durch einen gültigen moveGrobSchritt entstanden ist, dann gab es eine offene Tür zwischen von und nach.
-theorem moveGrobSchritt_nur_mit_offener_tuer {orte : Finset Ort} (G : SimpleGraph (OrtSet orte)) (offen : OrtSet orte → Bool) (p : Person) (von nach : OrtSet orte) (b b' : Belegung_safe orte) (hschritt : moveGrobSchritt G offen p von nach b b') :
+theorem moveGrobSchritt_nur_mit_offener_tuer {orte : Finset Ort} (G : SimpleGraph (OrtSet orte)) (offen : OrtSet orte → Bool) (p : Person) (von nach : OrtSet orte) (b b' : Belegung_safe orte) : moveGrobSchritt G offen p von nach b b' →
     ∃ t : OrtSet orte,
       istTuer t.1 ∧
       G.Adj von t ∧
       G.Adj nach t ∧
       offen t = true := by
+  intro hschritt
   unfold moveGrobSchritt at hschritt
   exact hschritt.1.2.2
 
