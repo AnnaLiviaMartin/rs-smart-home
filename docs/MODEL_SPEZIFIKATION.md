@@ -1,57 +1,87 @@
 # Modelspezifikation
 
-Dieses Dokument beschreibt die fachliche Modellierung des Smart-Home-Systems unabhängig von der konkreten Alloy- oder Lean-Implementierung nach dem Event-B Vorgehen.
+Dieses Dokument beschreibt die fachliche Modellierung des Smart-Home-Systems unabhängig von der konkreten Umsetzung in Alloy oder Lean. Die Modelle werden schrittweise nach dem Event-B-Vorgehen verfeinert.
 
-# Einführung der Spezifikation
-
-Sämtliche Objekte und deren Beziehungen, die in den Feineren Modellen erst definiert werden, gelten auch bereits im Groben Modell. 
+Jede Verfeinerungsstufe übernimmt die Elemente und Eigenschaften des vorherigen Modells und ergänzt weitere Details. Bereits eingeführte Objekte und Systemgarantien bleiben daher in den folgenden Modellen erhalten.
 
 # Grobes Modell
 
+Das grobe Modell beschreibt nur den direkten Wechsel einer Person zwischen zwei Räumen. Die Tür wird dabei als Verbindung zwischen den Räumen betrachtet, nicht jedoch als eigener Aufenthaltsort.
+
 ## Objekte und Beziehungen
 - Es gibt Orte, in denen sich Personen aufhalten können.
-- Türen und Räume sind Orte
-- Es gibt Räume, die sich in Garten und Zimmer aufteilen
+- Orte unterteilen sich in Räume und Türen.
+- Räume unterteilen sich in Gärten und Zimmer.
 - Alle Räume sind über Türen miteinander Verbunden
+- Räume und Türen können über Nachbarschaftsbeziehungen miteinander verbunden sein.
+- Nachbarschaftsbeziehungen sind symmetrisch.
 - Eine Person kann sich in genau einem Raum aufhalten
-- Alle Personen befinden zunächst im Garten
-- Ex existiert genau ein Garten
+- Alle Personen befinden initial im Garten
+- Es existiert genau ein Garten
 - Alle Nachbarschaftsbeziehungen der Räume und Türen sind symmetrisch
 - Alle Räume haben Türen als Nachbarn und Türen haben nur Räume als Nachbarn
-- Türen können offen oder geschlossen sein
+- Jede Tür kann geöffnet oder geschlossen sein.
 
-## Logik
-- Personen können in Räume wechseln, sofern die verbindende Tür geöffnet ist
-- Beispiel : Raum -> Raum
-_(Sofern es Personenstatus zulassen - muss später noch eingefügt werden)_
+## Systemgarantien
+- Eine Person kann nicht gleichzeitig mehreren Räumen zugeordnet sein.
+- Eine Tür verbindet genau zwei verschiedene Räume.
+- Eine Tür kann nicht direkt mit einer anderen Tür verbunden sein.
+- Bewegungen zwischen nicht verbundenen Räumen sind nicht möglich.
+
+## Ereignis `bewege`
+Eine Person kann direkt von einem Raum in einen anderen wechseln, wenn:
+
+- sich die Person im Ausgangsraum befindet,
+- der Zielraum über eine Tür mit dem Ausgangsraum verbunden ist,
+- die Tür geöffnet ist.
 
 # Verfeinertes Modell 01 (Zutrittskontrolle)
 
-## Logik 
-- Eine Person muss, wenn sie in den Raum wechselt, sich zwischendurch in der Tür befinden, sofern diese geöffent ist.
-- Beispiel : Raum -> Tür -> Raum
+Das erste verfeinerte Modell ergänzt den tatsächlichen Bewegungsablauf. Eine Tür ist nun nicht mehr nur eine Verbindung, sondern auch ein möglicher Aufenthaltsort.
 
+## Zusätzliche Systemregel
+
+Im verfeinerten Modell befindet sich eine Person während des Durchgangs vorübergehend in der Tür. Deshalb kann sich eine Person entweder in einem Raum oder in einer Tür befinden.
+
+## Ereignis `betreteTuer`
+
+Eine Person kann eine Tür betreten, wenn:
+
+- sie sich in einem mit der Tür verbundenen Raum befindet,
+- die Tür geöffnet ist.
+
+Anschließend wird die Person aus dem Raum entfernt und der Tür zugeordnet.
+
+## Ereignis `verlasseTuer`
+
+Eine Person kann eine Tür verlassen, wenn:
+
+- sie sich in der Tür befindet,
+- die Tür mit dem Zielraum verbunden ist.
+- Anschließend wird die Person aus der Tür entfernt und dem Zielraum zugeordnet.
 
 # Verfeinertes Modell 02 (Physische Umsetzung)
 
 ## Objekte und Beziehungen
-- Jede Tür hat ein eigenes Authentifizierungsgerät 
 
-Personen:
-- es gibt zwei Personentypen:
-- Bewohner (können Türen aufschließen)
-- Gäste (können keine Türen aufschließen)
+- Jede Tür besitzt genau ein Authentifizierungsgerät.
+- Es gibt zwei Personentypen: Bewohner:innen und Gäste.
+- Bewohner:innen besitzen eine dauerhafte Berechtigung zum Öffnen geschlossener Türen.
+- Gäste besitzen keine dauerhafte Berechtigung zum Öffnen geschlossener Türen.
+- Jede Tür besitzt einen Öffnungszustand, welcher durch das Authentifizieren beeinflussbar ist.
 
-## Logik
-- Personen melden sich über Tür beim Authentifizierungsgerät an.
-- Authentifizierungsgerät erkennt Bewohner und authentifiziert diese
-- mit der Authentifizierung öffnet sich die Tür
-- Gäste können nicht authentifiziert werden
-- Authentifizierung schließt niemals Türen, sondern öffnet diese nur
-- wenn Türen geschlossen, sind ist authentifizierung nötig
-- geöffnete Türen fallen irgendwann wieder zu
+## Ereignis `authentifizieren`
 
-## Szenarien:
+Eine Person kann sich an einer Tür authentifizieren, wenn:
+
+- sie sich in einem an die Tür angrenzenden Raum befindet,
+- die Tür geschlossen ist,
+- die Person eine gültige Berechtigung besitzt.
+
+Bei einer erfolgreichen Authentifizierung wird die Tür geöffnet. Authentifizierung schließt niemals Türen, sondern öffnet diese nur. Geöffnete Türen fallen irgendwann wieder zu.
+
+## Beispielabläufe
+
 **Tür geschlossen**
 Gast -> auth -> x
 Bewohner -> auth -> Tür -> Raum
@@ -62,11 +92,16 @@ Bewohner -> auth -> Tür -> Raum
 
 # Verfeinerungsschritt 03
 
-## Objekte und Beziehungen
-- Es gibt einen Alarmraum 17
-- Es gibt einen Herrn Weitz
-- Herr Weitz ist ein Bewohner
+Das dritte verfeinerte Modell ergänzt das Zugangssystem um einen Alarmzustand für Raum 17.
 
-## Logik
-Alarm geht an wenn: 
-- Jemand ohne Herrn Weitz in Raum 17 ist.
+## Objekte und Beziehungen
+
+- Es gibt einen speziell überwachten Raum 17.
+- Es gibt die Person Herrn Weitz.
+- Herr Weitz ist Bewohner.
+- Das System besitzt einen Alarmzustand.
+- Der Alarmzustand kann aktiviert oder deaktiviert sein.
+
+## Ereignis `aktiviereAlarm`
+
+Der Alarm wird aktiviert, wenn sich eine andere Person ohne Herr Weitz in Raum 17 befindet.
