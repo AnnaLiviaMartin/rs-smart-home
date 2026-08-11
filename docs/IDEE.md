@@ -431,6 +431,7 @@ Als Erweiterungen des Modells wären unter anderem folgende Punkte möglich:
 - mehrere Authentifizierungsgeräte,
 - gleichzeitige Bewegungen mehrerer Personen,
 - Alarmzustände bei unberechtigtem Zutritt,
-- zusätzliche Raumtypen.
+- zusätzliche Raumtypen,
+- wenn eine Person die Tür über das Authentifizierungsgerät öffnet, könnte durch die offene Tür eine weitere Person den Raum betreten (dazu müssten gleichzeitige Bewegung von Personen möglich sein).
 
 Damit bildet das Modell eine vereinfachte, aber erweiterbare Grundlage für die formale Beschreibung eines Zugangskontrollsystems.
