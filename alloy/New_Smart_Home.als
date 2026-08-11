@@ -4,6 +4,7 @@ one sig True, False extends Bool {}
 abstract sig PERSON{
 	var	letzterRaum: lone RAUM
 }
+
 sig BEWOHNER extends PERSON {}
 sig GAST extends PERSON {}
 
@@ -35,6 +36,15 @@ fact genauEinenGarten {
 	#GARTEN = 1
 }
 
+//fact tuerEnthaltenKeinePersonenGrob {
+   // always all t: TUER |
+      //  no t.personenImOrtGrob
+//}
+
+fact alleRaumeInEinemGebaeude {
+	all r: RAUM | r in GARTEN.^nachbarn
+}
+
 fact einePersonInGenauEinemOrt {
 	always (all p: PERSON |
 		#(p.~personenImOrtGrob) = 1	and
@@ -46,16 +56,12 @@ fact tuerImmerOffenWennPersonEnthalten{
 	always all t: TUER |  #(t.personenImOrtFein) >= 1 implies t.offen = True
 }
 
-//fact tuerKannKeinePersonenEnthalten_GROB{ //das Problem war, dass eine Person im Groben Modell sich in einer Tür befinden konnte.
-//	always all t: TUER | no t.personenImOrtGrob
-//}
-
 fact personKannNurDurchOffeneTürGehen {
 	always all t: TUER, p: PERSON | p in t.personenImOrtGrob implies t.offen = True
 }
 
 //türen und Räume sind immer symmetrisch
-fact alleNachbarnSindSymmerisch {
+fact alleNachbarnSindSymmetrisch {
 	all r: RAUM, t: TUER | r in t.nachbarn <=> t in r.nachbarn
 	all t:TUER, r: RAUM | t in r.nachbarn <=> r in t.nachbarn
 }
@@ -67,12 +73,10 @@ fact tuerVerbindetZweiRaeume {
 //################## init #################
 
 pred init {
-	//Am Anfang gitbt es keine Authentifizierten Personen, da alle im Garten stehen
 	all p: PERSON | p in GARTEN.personenImOrtGrob
 	all p: PERSON | p in GARTEN.personenImOrtFein
 	all p: PERSON | p.letzterRaum = GARTEN
 	all t: TUER | t.offen = False
-//	no AUTHENTICATION.authentifiziertePersone
 }
 
 //#################### invarianten Grob
@@ -87,6 +91,7 @@ pred moveGrob[p: PERSON, von, nach: RAUM]{
 
 	//frame
 	all o: RAUM - (von + nach)| o.personenImOrtGrob' = o.personenImOrtGrob
+	all t: TUER | t.personenImOrtGrob' = t.personenImOrtGrob
 }
 
 pred stutterGrob{
@@ -120,22 +125,22 @@ pred verlasseTuer[p: PERSON, nach: RAUM, t: TUER]{
 	all o: ORT - (nach + t) | o.personenImOrtFein' = o.personenImOrtFein
 }
 
-pred vorbedingungenMove2 [r1, r2: RAUM, t: TUER] {
+pred vorbedingungenmoveFein [r1, r2: RAUM, t: TUER] {
 	r1 != r2
 	r1 in t.nachbarn
 	r2 in t.nachbarn
 }
 
-pred move2 {
+pred moveFein {
 	some p: PERSON, r1, r2: RAUM, t: TUER | 
 		((betreteTuer[p, r1, t] and stutterGrob) or 
 		(verlasseTuer[p, r2, t] and moveGrob[p, r1, r2])) and 
-		vorbedingungenMove2[r1, r2, t]
+		vorbedingungenmoveFein[r1, r2, t]
 }
 
-pred move3 {
+pred moveSehrFein {
 	some p: PERSON, t: TUER |
-		(oeffneTuer[p, t] and stutter) or (move2 and tuerBleibtOffenOderFaelltZu) //frameconsition mit in die Klammer, weil sich das mit oeffneTuer beißt
+		(oeffneTuer[p, t] and stutter) or (moveFein and tuerBleibtOffenOderFaelltZu) //frameconsition mit in die Klammer, weil sich das mit oeffneTuer beißt
 // stutter hier habe ich gebraucht, weil Personen wieder Random spawnen konnten
 
 	// Frame
@@ -148,13 +153,13 @@ pred stutter {
 	all p: PERSON | p.letzterRaum' =  p.letzterRaum
 }
 
-fact show {
+pred show {
 	init
-	always move3 
+	always moveSehrFein 
 //	or stutter //Stuttervorgänge werden stand jetzt im feinen Modell nicht ausgeführt, Das Modell ist also gezwungen, bei jedem Schritt eine Person im feinen Modell zu bewegen. 
 }
 
-//run show for exactly 2 PERSON, 1 GAST, 1 BEWOHNER, exactly 1 GARTEN, exactly 2 TUER, exactly 3 RAUM
+run show for exactly 2 PERSON, 1 GAST, 1 BEWOHNER, exactly 1 GARTEN, exactly 3 TUER, exactly 4 RAUM
 
 //run show
 
@@ -169,6 +174,7 @@ pred oeffneTuer [p: PERSON, tuer: TUER] {
 	//frame
 //	all t: TUER | t.offen = False implies t.offen' = False
 	all t: TUER - tuer | t.offen' = t.offen
+	all o: ORT | o.personenImOrtGrob' = o.personenImOrtGrob and o.personenImOrtFein' = o.personenImOrtFein
 }
 
 pred tuerBleibtOffenOderFaelltZu {
@@ -223,6 +229,17 @@ assert gleichesErgebnisInFreinUndGrob_V2 { //Hier gabe es die verbesserung, dass
 		p in r.personenImOrtFein implies p in r.personenImOrtGrob
 }
 
+assert verfeinerungKorrekt { // eventuell entfernen wenn andere assert funktioniert
+	always all p: PERSON, r1, r2: RAUM |
+		(p in r1.personenImOrtFein and p in r2.personenImOrtFein')
+		implies (p in r1.personenImOrtGrob' and p in r2.personenImOrtGrob')
+}
+
+assert verfeinerungKorrekt_V2 { // Personen können noch in den Türen Spawnen
+	always all p: PERSON, r: RAUM |
+		p in r.personenImOrtFein implies p in r.personenImOrtGrob
+}
+
 assert nurBewohnerKannTuerOeffnen {
 	always all t: TUER |
 		t.offen = False and t.offen' = True
@@ -230,10 +247,25 @@ assert nurBewohnerKannTuerOeffnen {
 		b in t.nachbarn.personenImOrtFein
 }
 
+assert raumStrukturBleibtGleich {
+	always all r: RAUM | 
+		r.nachbarn' = r.nachbarn
+}
+
+assert tuerStrukturBleibtGleich {
+	always all t: TUER | 
+		t.nachbarn' = t.nachbarn
+}
+
+// falsche Asserts
+
+assert alleTuerenSindImmerOffen {
+	always all t: TUER | t.offen = True
+}
+
 assert tuerIstGeschlossenBisBewohnerSieOeffnet { //evt was mit unitl ausprobieren
 
 }
-
 
 check personNurInEinemOrt for 4
 check geschlosseneTuerIstLeer for 4 // Bruahct man das, wenn es bereits als axiom definiert ist?
@@ -243,7 +275,13 @@ check keineTeleportation_FEIN for 4
 check personIstNieInTuer_GROB for 4
 check gleichesErgebnisInFreinUndGrob for 4
 check gleichesErgebnisInFreinUndGrob_V2 for 4
-check nurBewohnerKannTuerOeffnen for 4
+check verfeinerungKorrekt_V2 for 4
+check nurBewohnerKannTuerOeffnen for 6
+check raumStrukturBleibtGleich for 4
+check tuerStrukturBleibtGleich for 4
+check alleTuerenSindImmerOffen for 4
 
-// ToDo : Checken, warum kein newConfic möglich ist ; Türen gehen manchmal automatisch wieder auf ohne autentifizierung ; 
+// ToDo : Checken, warum kein newConfic möglich ist ; Türen gehen manchmal automatisch wieder auf ohne autentifizierung ; PersonenGrob können noch in den Türen Spawnen
 
+//Eigenschaften, die nicht als axiome gelten haben wir über Frame Vorgänge gehandelt, da diese nicht als natürliche Gesetze gelten, beispielsweise das eine PersonGrob nicht in einer Tür stehen kann.
+//Problem: PersonGrob kann noch in Tür spawnen --> Frame Conditions überprüfen und code aufräumen
