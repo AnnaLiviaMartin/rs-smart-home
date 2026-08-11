@@ -147,3 +147,9 @@ lean SmartHome.lean
 ```
 
 Lean ist in zwei Dateien aufgesplittet. Die erste Datei todo.td stellt die Beweise bereit. Die zweite Datei todo2.td stellt ein Beispiel zur Verfügung.
+
+## Quellen
+
+Bernd das Brot: https://erfurt-mitte.de/blogs/erfurt-mitte-blog/bernd-das-brot-merchandise-im-onlineshop-kultiges-kultbrot-fuer-fans
+
+Sandmännchen: https://www.gmx.ch/magazine/unterhaltung/tv-shows/24-zentimeter-gross-unermuedlich-sandmann-55-30229448
