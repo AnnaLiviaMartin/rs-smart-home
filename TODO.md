@@ -1,10 +1,10 @@
 - Dateinamen überprüfen in Doku
 - Projektstruktur überprüfen in Doku
 - Konstistente Benennung der Bilder
-- Garten/Zimmer Unterscheidung erklären
-- Fehlende Tür zwischen Studi-Raum-Gang und Vorlesungsraum-Gang
+- Fehlende Tür zwischen Studi-Raum Gang und Vorlesungsraum-Gang
 - Erklären warum das Beispiel Gebäude D nicht bipartite ist aber bei uns im Code das wichtig ist
 - Türschließen
+- Alles soll sich gleich formuliert anhören, Stil ist aktuell sprachlich noch anders
 - verworfen erklären:
       - Person wechselt zwischen Räumen:
       1. Person muss sich am Authentifizierungsgerät anmelden
@@ -18,3 +18,4 @@
       5. Tür schließen
       3. Authentifizierungsgerät muss Person eintragen (sofern sie durchgegangen ist?)
       6. Tür verriegeln
+- Umsetzung: erklären warum wir in Lean Zustand verwendet haben/ warum wir nicht mit Zustand beweisen, Tür zufallen erklären warum und wie umgesetzt, erklären warum SimpleGraph verwendet
