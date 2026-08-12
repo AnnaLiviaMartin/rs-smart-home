@@ -1,16 +1,21 @@
+//  bitte alte Dateien löschen + thm-Datei für Ansehen bereitstellen 
+// insgesamt fände ich es eine gute Idee mit den Überschriften das einheitlich zu machen, also alle gleiche Art und Beschreibung was die machen (so wie bei ###### axiome ), sodass man eine übersicht durch die dateistruktur selbst schon hat
+// bitte ebenfalls alles englische auf deutsch machen
+// und code löschen, der nicht mehr benötigt wird bzw. erklären warum er auskommentiert ist
+
 abstract sig Bool {}
 one sig True, False extends Bool {}
 
 abstract sig PERSON{
-	var	letzterRaum: lone RAUM
+	var letzterRaum: lone RAUM
 }
 
 sig BEWOHNER extends PERSON {}
 sig GAST extends PERSON {}
 
 abstract sig ORT {
-	var 	personenImOrtGrob: set PERSON,
-	var	personenImOrtFein: set PERSON,
+	var personenImOrtGrob: set PERSON,
+	var personenImOrtFein: set PERSON,
 	nachbarn: some ORT
 }
 
@@ -22,6 +27,7 @@ sig GARTEN extends RAUM{}{
 	one nachbarn //Garten soll nur einen Zugang zum Haus haben
 }
 
+// ich weiß dass du das vermutlich noch tuen wirst: aber bitte nicht genutzen code entweder löschen oder erklären warum er drinnen bleibt
 sig TUER extends ORT{
 	var	offen: one Bool
 }{
@@ -30,12 +36,14 @@ sig TUER extends ORT{
 //	always #personenImOrtGrob = 0 //Damit keine Person im groben Modell ind er Tür stehen kann
 }
 
+// so eine überschrift wäre bei den objekten auch schön weil einheitlich
 //#################### axiome
 
 fact genauEinenGarten {
 	#GARTEN = 1
 }
 
+// warum auskommentiert? -> kommentar bitte
 //fact tuerEnthaltenKeinePersonenGrob {
    // always all t: TUER |
       //  no t.personenImOrtGrob
@@ -60,6 +68,7 @@ fact personKannNurDurchOffeneTürGehen {
 	always all t: TUER, p: PERSON | p in t.personenImOrtGrob implies t.offen = True
 }
 
+// der kommentar wird nicht benötigt
 //türen und Räume sind immer symmetrisch
 fact alleNachbarnSindSymmetrisch {
 	all r: RAUM, t: TUER | r in t.nachbarn <=> t in r.nachbarn
@@ -81,6 +90,7 @@ pred init {
 
 //#################### invarianten Grob
 
+// moveGrob ist englisch -> auch deutsch machen?
 pred moveGrob[p: PERSON, von, nach: RAUM]{
 	//pre
 	some t: TUER | t in von.nachbarn and t in nach.nachbarn and t.offen in True
@@ -98,6 +108,7 @@ pred stutterGrob{
 	all o: ORT | o.personenImOrtGrob' = o.personenImOrtGrob
 }
 
+// ich finde diese überschriften gut, kannst du unterschieden zwischen den einzelnen verfeinerungsstufen hier? also zwischen stufe 2 und 3?
 //#################### invarianten der Verfeinerung -- alles was im feinen Modell funktioniert, muss auch im groben Modell funktionieren
 
 pred betreteTuer[p: PERSON, von: RAUM, t: TUER]{
@@ -105,10 +116,12 @@ pred betreteTuer[p: PERSON, von: RAUM, t: TUER]{
 	p in von.personenImOrtFein
 	t in von.nachbarn
 	t.offen in True
+
 	//post
 	von.personenImOrtFein' = von.personenImOrtFein - p
 	t.personenImOrtFein' = t.personenImOrtFein + p
 	p.letzterRaum' = von
+
 	//frame
 	all o: ORT - (von + t) | o.personenImOrtFein' = o.personenImOrtFein
 }
@@ -118,19 +131,23 @@ pred verlasseTuer[p: PERSON, nach: RAUM, t: TUER]{
 	p in t.personenImOrtFein
 	nach in t.nachbarn
 	p.letzterRaum != nach
+
 	//post
 	t.personenImOrtFein' = t.personenImOrtFein - p
 	nach.personenImOrtFein' = nach.personenImOrtFein + p
+
 	//frame
 	all o: ORT - (nach + t) | o.personenImOrtFein' = o.personenImOrtFein
 }
 
+// camelCase?
 pred vorbedingungenmoveFein [r1, r2: RAUM, t: TUER] {
 	r1 != r2
 	r1 in t.nachbarn
 	r2 in t.nachbarn
 }
 
+// englisch?
 pred moveFein {
 	some p: PERSON, r1, r2: RAUM, t: TUER | 
 		((betreteTuer[p, r1, t] and stutterGrob) or 
@@ -153,6 +170,7 @@ pred stutter {
 	all p: PERSON | p.letzterRaum' =  p.letzterRaum
 }
 
+// englisch?
 pred show {
 	init
 	always moveSehrFein 
@@ -160,17 +178,20 @@ pred show {
 }
 
 run show for exactly 2 PERSON, 1 GAST, 1 BEWOHNER, exactly 1 GARTEN, exactly 3 TUER, exactly 4 RAUM
-
+// bitte nur ein run show von beidem oder erklären warum beide nötig sind
 //run show
 
+// operationen für welches modell? bitte spezifizieren
 //################# Operationen ##################
 pred oeffneTuer [p: PERSON, tuer: TUER] {
 	//pre
 	p in BEWOHNER
 	tuer in p.~personenImOrtFein.nachbarn //Tür muss nachbar zum Raum sein, in dem die person sich aufhält
 	tuer.offen = False
+
 	//post
 	tuer.offen' = True
+
 	//frame
 //	all t: TUER | t.offen = False implies t.offen' = False
 	all t: TUER - tuer | t.offen' = t.offen
@@ -224,6 +245,7 @@ assert gleichesErgebnisInFreinUndGrob{
 		(p in von.nachbarn.nachbarn.personenImOrtGrob' and p in von.nachbarn.nachbarn.personenImOrtFein')
 }
 
+// anderer Methoden-Name?
 assert gleichesErgebnisInFreinUndGrob_V2 { //Hier gabe es die verbesserung, dass es nur einen Garten geben darf, da dies dre Anfangsraum für alle ist, die Personen aber auf diese zwei gärten initial unglecih aufgeteilt waren.
 	always all p:PERSON, r: RAUM |
 		p in r.personenImOrtFein implies p in r.personenImOrtGrob
@@ -235,6 +257,7 @@ assert verfeinerungKorrekt { // eventuell entfernen wenn andere assert funktioni
 		implies (p in r1.personenImOrtGrob' and p in r2.personenImOrtGrob')
 }
 
+// warum zwei versionen? anders benennen?
 assert verfeinerungKorrekt_V2 { // Personen können noch in den Türen Spawnen
 	always all p: PERSON, r: RAUM |
 		p in r.personenImOrtFein implies p in r.personenImOrtGrob
@@ -258,7 +281,7 @@ assert tuerStrukturBleibtGleich {
 }
 
 // falsche Asserts
-
+// warum falsche asserts nicht löschen?
 assert alleTuerenSindImmerOffen {
 	always all t: TUER | t.offen = True
 }
