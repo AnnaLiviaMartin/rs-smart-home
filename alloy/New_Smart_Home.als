@@ -90,18 +90,14 @@ pred init {
 pred schrittGrob[p: PERSON, von, nach: RAUM]{
 	//pre
 	some t: TUER | t in von.nachbarn and t in nach.nachbarn and t.offen in True
+//	p in von.personenImOrtGrob
 
 	//post
 	von.personenImOrtGrob' = von.personenImOrtGrob - p
 	nach.personenImOrtGrob' = nach.personenImOrtGrob + p
 
 	//frame
-	all o: RAUM - (von + nach)| o.personenImOrtGrob' = o.personenImOrtGrob
-	all t: TUER | t.personenImOrtGrob' = t.personenImOrtGrob
-}
-
-pred stutterGrob{
-	all o: ORT | o.personenImOrtGrob' = o.personenImOrtGrob
+	all o: ORT - (von + nach) | o.personenImOrtGrob' = o.personenImOrtGrob
 }
 
 //#################### Zustandsübergänge / Ereignisse des Feinen Modells
@@ -130,6 +126,7 @@ pred verlasseTuer[p: PERSON, nach: RAUM, t: TUER]{
 	//post
 	t.personenImOrtFein' = t.personenImOrtFein - p
 	nach.personenImOrtFein' = nach.personenImOrtFein + p
+//	p.letzterRaum' = t
 
 	//frame
 	all o: ORT - (nach + t) | o.personenImOrtFein' = o.personenImOrtFein
@@ -143,7 +140,7 @@ pred vorbedingungenMoveFein [r1, r2: RAUM, t: TUER] {
 
 pred schrittFein {
 	some p: PERSON, r1, r2: RAUM, t: TUER | 
-		((betreteTuer[p, r1, t] and stutterGrob) or 
+		((betreteTuer[p, r1, t] and StutterSchritt_2[t]) or 
 		(verlasseTuer[p, r2, t] and schrittGrob[p, r1, r2])) and 
 		vorbedingungenMoveFein[r1, r2, t]
 }
@@ -152,7 +149,7 @@ pred schrittFein {
 
 pred schrittSehrFein {
 	some p: PERSON, t: TUER |
-		(oeffneTuer[p, t] and stutter) or (schrittFein and tuerBleibtOffenOderFaelltZu) //frameconsition mit in die Klammer, weil sich das mit oeffneTuer beißt
+		(oeffneTuer[p, t] and StutterSchritt_1[t]) or (schrittFein and tuerBleibtOffenOderFaelltZu) //frameconsition mit in die Klammer, weil sich das mit oeffneTuer beißt
 // stutter hier habe ich gebraucht, weil Personen wieder Random spawnen konnten -- Kommentar später entfernen
 	
 }
@@ -167,30 +164,36 @@ pred oeffneTuer [p: PERSON, tuer: TUER] {
 	tuer.offen' = True
 
 	//frame
-//	all t: TUER | t.offen = False implies t.offen' = False
-	all t: TUER - tuer | t.offen' = t.offen
-	all o: ORT | o.personenImOrtGrob' = o.personenImOrtGrob and o.personenImOrtFein' = o.personenImOrtFein
 }
 
 pred tuerBleibtOffenOderFaelltZu {
 	all t: TUER | t.offen = False implies t.offen' = False //da ich nicht definiert habe, dass eine Tür von true auf false springen kann, ist die Lücke offen geblieben, damit die Tür sich schließen kann, sofern sie offen ist.
 }
 
-pred stutter {
-	all o: ORT | o.personenImOrtFein' = o.personenImOrtFein
-	all o: ORT | o.personenImOrtGrob' = o.personenImOrtGrob
-	all p: PERSON | p.letzterRaum' =  p.letzterRaum
-}
-
-pred show {
+fact show {
 	init
 	always schrittSehrFein 
 //	or stutter //Stuttervorgänge werden stand jetzt im feinen Modell nicht ausgeführt, Das Modell ist also gezwungen, bei jedem Schritt eine Person im feinen Modell zu bewegen. 
 }
 
-run show for exactly 2 PERSON, 1 GAST, 1 BEWOHNER, exactly 1 GARTEN, exactly 3 TUER, exactly 4 RAUM
+//run show for exactly 2 PERSON, 1 GAST, 1 BEWOHNER, exactly 1 GARTEN, exactly 3 TUER, exactly 4 RAUM
 // bitte nur ein run show von beidem oder erklären warum beide nötig sind
 //run show
+
+//################ Stutter ######################
+
+pred StutterSchritt_1 [tuer: TUER] {
+	all o: ORT | o.personenImOrtFein' = o.personenImOrtFein
+	all o: ORT | o.personenImOrtGrob' = o.personenImOrtGrob
+	all t: TUER - tuer | t.offen' = t.offen
+	all p: PERSON | p.letzterRaum' =  p.letzterRaum
+}
+
+pred StutterSchritt_2 [tuer: TUER]{
+	all o: ORT | o.personenImOrtGrob' = o.personenImOrtGrob
+	all t: TUER - tuer | t.offen' = t.offen
+	all p: PERSON | p.letzterRaum' =  p.letzterRaum
+}
 
 //################ Tests ######################
 
