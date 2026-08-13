@@ -62,6 +62,16 @@ abbrev OrtSet (Orte : Finset Ort) := { p : Ort // p ∈ Orte } -- Menge an Orten
 
 abbrev TuerSet (Orte : Finset Ort) := { t : Tuer // Ort.Tuer t ∈ Orte }
 
+abbrev RaumSet (Orte : Finset Ort) := { r : Raum // Ort.Raum r ∈ Orte }
+
+-- Raum ist Ort
+def raumAlsOrt {orte : Finset Ort} (r : RaumSet orte) : OrtSet orte :=
+  ⟨Ort.Raum r.1, r.2⟩
+
+-- Tuer ist Ort
+def tuerAlsOrt {orte : Finset Ort} (t : TuerSet orte) : OrtSet orte :=
+  ⟨Ort.Tuer t.1, t.2⟩
+
 abbrev PersonSet (Personen : Finset Person) := { p : Person // p ∈ Personen }
 
 abbrev Belegung_safe (Orte : Finset Ort) := Finmap (fun _ : (OrtSet Orte) => Finset Person) -- arbeitet nur mit den erlaubten Orten aus Orte
@@ -166,17 +176,13 @@ def einePersonGenauEinOrt {orte : Finset Ort} {personen : Finset Person} (b : Be
 def belegtePersonen {orte : Finset Ort} (b : Belegung_safe orte) (o : OrtSet orte) : Finset Person :=
   (b.lookup o).getD ∅
 
-def tuerOffenWennPerson {orte} (belegungFein : Belegung_safe orte) (offen : OrtSet orte → Bool) : Prop :=
-  ∀ o : OrtSet orte,
-    match o.val with
-    | Ort.Tuer _ =>
-        (belegungFein.lookup o).getD ∅ ≠ ∅ → offen o = true
-    | Ort.Raum _ => True -- Wenn Personen in der Tür sind, ist sie offen. Wenn keine Personen drin sind, darf sie offen oder geschlossen sein.
+def tuerOffenWennPerson {orte} (belegungFein : Belegung_safe orte) (offen : TuerSet orte → Bool) : Prop :=
+  ∀ o : TuerSet orte, (belegungFein.lookup (tuerAlsOrt o)).getD ∅ ≠ ∅ → offen o = true
 
 structure Zustand (orte : Finset Ort) (personen : Finset Person) where --dynamische
   belegungGrob : Belegung_safe orte
   belegungFein : Belegung_safe orte -- einePersonInGenauEinemOrt
-  offen : OrtSet orte → Bool -- jede Tür hat individuell ein "offen"
+  offen : TuerSet orte → Bool -- jede Tür hat individuell ein "offen"
   letzterRaum : Person → Option Raum -- 1 oder kein Raum
   grob_einePersonGenauEinOrt : einePersonGenauEinOrt (personen := personen) belegungGrob
   fein_einePersonGenauEinOrt : einePersonGenauEinOrt (personen := personen) belegungFein
@@ -201,8 +207,8 @@ def raumVonOrt {orte : Finset Ort} (o : OrtSet orte) : Option Raum :=
   | Ort.Raum r => some r
   | Ort.Tuer _ => none
 
-def aktualisiereLetztenRaum {orte : Finset Ort} (letzterRaum : Person → Option Raum) (p : Person) (nach : OrtSet orte) :
-    Person → Option Raum := Function.update letzterRaum p (raumVonOrt nach)
+def aktualisiereLetztenRaum {orte : Finset Ort} (letzterRaum : Person → Option Raum) (p : Person) (nach : RaumSet orte) :
+    Person → Option Raum := Function.update letzterRaum p (raumVonOrt (raumAlsOrt nach))
 
 -- Belegung lesen
 def personenImOrt {orte : Finset Ort} (b : Belegung_safe orte) (o : OrtSet orte) : Finset Person :=
@@ -215,7 +221,7 @@ def istBelegt {orte : Finset Ort} (b : Belegung_safe orte) (p : Person) (o : Ort
 def setzeBelegung {orte : Finset Ort} (b : Belegung_safe orte) (o : OrtSet orte) (personen : Finset Person) :
   Belegung_safe orte := Finmap.insert o personen b
 
-def moveGrobBelegung {orte : Finset Ort} (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) :
+def verschiebePerson {orte : Finset Ort} (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) :
   Belegung_safe orte :=
   let personenVon := personenImOrt b von
   let personenNach := personenImOrt b nach
@@ -223,54 +229,65 @@ def moveGrobBelegung {orte : Finset Ort} (p : Person) (von nach : OrtSet orte) (
   setzeBelegung bVon nach (insert p personenNach)
 
 -- Tür
-def hatOffeneVerbindung {orte : Finset Ort} (G : BipartiteOrtGraph orte) (offen : OrtSet orte → Bool) (von nach : OrtSet orte) : Prop :=
-  ∃ t : OrtSet orte,
-    istTuer t.1 ∧
-    G.Adj von t ∧
-    G.Adj nach t ∧
+def hatOffeneVerbindung {orte : Finset Ort} (G : BipartiteOrtGraph orte) (offen : TuerSet orte → Bool) (von nach : RaumSet orte) : Prop :=
+  ∃ t : TuerSet orte,
+    istTuer (tuerAlsOrt t) ∧
+    G.Adj (raumAlsOrt von) (tuerAlsOrt t) ∧
+    G.Adj (raumAlsOrt nach) (tuerAlsOrt t) ∧
     offen t = true
+
+/- ######### Initiales Modell (0. Verfeinerung) ######### -/
 
 /-
   Bedingungen
 -/
 
--- Vorbedingung: Person p ist im Raum von, von ≠ nach, es gibt eine Tür die die beiden Räume verbindet
-def pre_moveGrobMitTuer {orte : Finset Ort} (G : BipartiteOrtGraph orte) (offen : OrtSet orte → Bool) (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) : Prop :=
-  p ∈ personenImOrt b von ∧ 
+-- Vorbedingung: Person p ist im Raum von, von ≠ nach, es gibt eine Tür die die beiden Räume verbindet, von und nach sind Räume
+def pre_moveGrobMitTuer {orte : Finset Ort} (G : BipartiteOrtGraph orte) (offen : TuerSet orte → Bool) (p : Person) (von nach : RaumSet orte) (b : Belegung_safe orte) : Prop :=
+  p ∈ personenImOrt b (raumAlsOrt von) ∧ 
+  istRaum (raumAlsOrt von) ∧
+  istRaum (raumAlsOrt nach) ∧ 
   von ≠ nach ∧ 
   hatOffeneVerbindung G offen von nach
 
 -- Nachbedingung
-def post_moveGrob {orte : Finset Ort} (p : Person) (G : BipartiteOrtGraph orte) (von nach : OrtSet orte) (b' : Belegung_safe orte) (offen' : OrtSet orte → Bool) (letzterRaum letzterRaum' : Person → Option Raum) : Prop :=
-  p ∉ personenImOrt b' von ∧
-  p ∈ personenImOrt b' nach ∧
-  letzterRaum' = aktualisiereLetztenRaum letzterRaum p nach ∧ -- letzter ort todo
-  hatOffeneVerbindung G offen' von nach -- tuer offen todo
+def post_moveGrob {orte : Finset Ort} (p : Person) (G : BipartiteOrtGraph orte) (von nach : RaumSet orte) (b' : Belegung_safe orte) (offen' : TuerSet orte → Bool) (letzterRaum letzterRaum' : Person → Option Raum) : Prop :=
+  p ∉ personenImOrt b' (raumAlsOrt von) ∧
+  p ∈ personenImOrt b' (raumAlsOrt nach) ∧
+  letzterRaum' = aktualisiereLetztenRaum letzterRaum p nach ∧
+  hatOffeneVerbindung G offen' von nach
 
 -- Frame, andere Personen bleiben gleich, tuer bleibt gleich
 def frame_moveGrob_personen {orte : Finset Ort} (p : Person) (b b' : Belegung_safe orte) : Prop :=
   ∀ q : Person,
     q ≠ p →
-    ∀ o : OrtSet orte,
-      q ∈ personenImOrt b' o ↔
-      q ∈ personenImOrt b o
+    ∀ o : RaumSet orte,
+      q ∈ personenImOrt b' (raumAlsOrt o) ↔
+      q ∈ personenImOrt b (raumAlsOrt o)
 
-def frame_moveGrob_tuer {orte : Finset Ort} (G : BipartiteOrtGraph orte) (von nach : OrtSet orte) (offen offen' : OrtSet orte → Bool) : Prop :=
+def frame_moveGrob_tuer {orte : Finset Ort} (G : BipartiteOrtGraph orte) (von nach : RaumSet orte) (offen offen' : TuerSet orte → Bool) : Prop :=
   offen' = offen ∧ hatOffeneVerbindung G offen von nach
 
 -- Aktion
-def moveGrobAktion {orte : Finset Ort} (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) (offen : OrtSet orte → Bool) (letzterRaum : Person → Option Raum):
-  Belegung_safe orte × (OrtSet orte → Bool) × (Person → Option Raum) :=
+def aktion_moveGrob {orte : Finset Ort} (p : Person) (von nach : RaumSet orte) (b : Belegung_safe orte) (offen : TuerSet orte → Bool) (letzterRaum : Person → Option Raum) :
+  Belegung_safe orte × (TuerSet orte → Bool) × (Person → Option Raum) :=
   (
-    moveGrobBelegung p von nach b,
+    verschiebePerson p (raumAlsOrt von) (raumAlsOrt nach) b,
     offen,
     aktualisiereLetztenRaum letzterRaum p nach
   )
 
+-- Stutter
+def stutterGrob {orte : Finset Ort} {personen : Finset Person} (Z Z' : Zustand orte personen) : Prop :=
+  Z'.belegungGrob = Z.belegungGrob ∧
+  Z'.belegungFein = Z.belegungFein ∧
+  Z'.offen = Z.offen ∧
+  Z'.letzterRaum = Z.letzterRaum
+
 -- Relation für einen gültigen groben Übergang -> aka moveGrob
-def moveGrobSchritt {orte : Finset Ort} (G : BipartiteOrtGraph orte) (offen offen' : OrtSet orte → Bool) (p : Person) (von nach : OrtSet orte) (b b' : Belegung_safe orte) (letzterRaum letzterRaum' : Person → Option Raum) : Prop :=
+def moveGrobSchritt {orte : Finset Ort} (G : BipartiteOrtGraph orte) (offen offen' : TuerSet orte → Bool) (p : Person) (von nach : RaumSet orte) (b b' : Belegung_safe orte) (letzterRaum letzterRaum' : Person → Option Raum) : Prop :=
   pre_moveGrobMitTuer G offen p von nach b ∧
-  let aktion := moveGrobAktion p von nach b offen letzterRaum
+  let aktion := aktion_moveGrob p von nach b offen letzterRaum
   b' = aktion.1 ∧
   offen' = aktion.2.1 ∧
   letzterRaum' = aktion.2.2 ∧
@@ -281,28 +298,43 @@ def moveGrobSchritt {orte : Finset Ort} (G : BipartiteOrtGraph orte) (offen offe
 -/
 
 -- Beweise dass das auch als Zustand mit BipartiteOrtGraph geht und nicht nur durch möglicherweise inkorrekte Listen etc. 
-def moveGrobSchrittZustand {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (von nach : OrtSet orte) (Z Z' : Zustand orte personen) : Prop :=
+def moveGrobSchrittZustand {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (von nach : RaumSet orte) (Z Z' : Zustand orte personen) : Prop :=
   moveGrobSchritt G Z.offen Z'.offen p von nach Z.belegungGrob Z'.belegungGrob Z.letzterRaum Z'.letzterRaum
 
 /-
-  Beweise
+  Beweise moveGrob
 -/
--- TODO: Türset statt ortset, prüfen dass tür offen ist und letzterRaum gesetzt wird
+-- TODO: prüfen dass tür offen ist und letzterRaum gesetzt wird
+
+-- Wenn zwei Räume nach der Umwandlung in OrtSet gleich sind, dann waren auch die ursprünglichen Räume gleich.
+theorem raumAlsOrt_injektiv {orte : Finset Ort} : Function.Injective (@raumAlsOrt orte) := by
+  intro r₁ r₂ h
+  apply Subtype.ext
+  cases r₁ with
+  | mk r₁ hr₁ =>
+    cases r₂ with
+    | mk r₂ hr₂ =>
+      cases h
+      rfl
 
 -- Person wurde aus dem Ausgangsort entfernt wenn hpre erfüllt ist
-theorem moveGrob_person_nicht_in_von {orte : Finset Ort} (G : BipartiteOrtGraph orte) (offen : OrtSet orte → Bool) (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte)  :
-    pre_moveGrobMitTuer G offen p von nach b → p ∉ personenImOrt (moveGrobBelegung p von nach b) von := by
+theorem moveGrob_person_nicht_in_von {orte : Finset Ort} (G : BipartiteOrtGraph orte) (offen : TuerSet orte → Bool) (p : Person) (von nach : RaumSet orte) (b : Belegung_safe orte)  :
+    pre_moveGrobMitTuer G offen p von nach b → p ∉ personenImOrt (verschiebePerson p (raumAlsOrt von) (raumAlsOrt nach) b) (raumAlsOrt von) := by
   intro hpre
-  rcases hpre with ⟨hpVon, hVonNach, hTür⟩
+  rcases hpre with ⟨hpVon, r1, r2, hVonNach, hTür⟩
+  have hVonNachOrt : raumAlsOrt von ≠ raumAlsOrt nach := by -- beweist: raumAlsOrt von ≠ raumAlsOrt nach -> Angenommen, raumAlsOrt von = raumAlsOrt nach. Dann folgt wegen der Injektivität von raumAlsOrt: von = nach. Das widerspricht hVonNach. Also sind raumAlsOrt von und raumAlsOrt nach verschieden.
+    intro hGleich
+    apply hVonNach
+    exact raumAlsOrt_injektiv hGleich
   simp [
-    moveGrobBelegung,
+    verschiebePerson,
     setzeBelegung,
     personenImOrt,
-    hVonNach
+    hVonNachOrt
   ]
 
 -- gleicher Beweis aber nun mit Zustand und Graphen -> damit nur korrekte Inputs möglich
-/-theorem moveGrobSchrittZustand_person_nicht_in_von {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (von nach : OrtSet orte) (Z Z' : Zustand orte personen) (hmove : moveGrobSchrittZustand G p von nach Z Z') :
+/-theorem moveGrobSchrittZustand_person_nicht_in_von {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (von nach : RaumSet orte) (Z Z' : Zustand orte personen) (hmove : moveGrobSchrittZustand G p von nach Z Z') :
     p ∉ personenImOrt Z'.belegungGrob von := by
   rcases hmove with ⟨t, htuer, hVonTuer, hNachTuer, htOffen, hpre, hGrob, hOffenPost, hLetzterRaum⟩
   rw [hGrob]
@@ -317,106 +349,225 @@ theorem moveGrob_person_nicht_in_von {orte : Finset Ort} (G : BipartiteOrtGraph 
 -/
 
 -- Alle anderen Personen bleiben unverändert, q ist einfach eine andere random Person
-theorem moveGrob_frame_personen {orte : Finset Ort} (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) :
-    frame_moveGrob_personen p b (moveGrobBelegung p von nach b) := by
+theorem moveGrob_frame_personen {orte : Finset Ort} (p : Person) (von nach : RaumSet orte) (b : Belegung_safe orte) (hVonNach : von ≠ nach) :
+    frame_moveGrob_personen p b (verschiebePerson p (raumAlsOrt von) (raumAlsOrt nach) b) := by
+  have hVonNachOrt : raumAlsOrt von ≠ raumAlsOrt nach := by
+    intro hGleich
+    apply hVonNach
+    exact raumAlsOrt_injektiv hGleich
   intro q hqp o
   by_cases hVon : o = von
   · subst o
-    by_cases hVonNach : von = nach
-    · subst nach
-      simp [
-        moveGrobBelegung,
-        setzeBelegung,
-        personenImOrt,
-        hqp
-      ]
-    · simp [
-        moveGrobBelegung,
-        setzeBelegung,
-        personenImOrt,
-        hVonNach,
-        hqp
-      ]
+    simp [
+      verschiebePerson,
+      setzeBelegung,
+      personenImOrt,
+      hVonNachOrt,
+      hqp
+    ]
   · by_cases hNach : o = nach
     · subst o
-      by_cases hVonNach : von = nach
-      · subst nach
-        simp [
-          moveGrobBelegung,
-          setzeBelegung,
-          personenImOrt,
-          hqp
-        ]
-      · simp [
-          moveGrobBelegung,
-          setzeBelegung,
-          personenImOrt,
-          hqp
-        ]
-    · simp [
-        moveGrobBelegung,
+      simp [
+        verschiebePerson,
         setzeBelegung,
         personenImOrt,
-        hVon,
-        hNach
+        hqp
+      ]
+    · have hOVon : raumAlsOrt o ≠ raumAlsOrt von := by
+        intro hGleich
+        apply hVon
+        exact raumAlsOrt_injektiv hGleich
+      have hONach : raumAlsOrt o ≠ raumAlsOrt nach := by
+        intro hGleich
+        apply hNach
+        exact raumAlsOrt_injektiv hGleich
+      simp [
+        verschiebePerson,
+        setzeBelegung,
+        personenImOrt,
+        hOVon,
+        hONach
       ]
 
-theorem moveGrob_frame_personen_gleichbleibend {orte : Finset Ort} (p q : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) (hpq : q ≠ p) :
-    ∀ o : OrtSet orte,
-      q ∈ personenImOrt (moveGrobBelegung p von nach b) o ↔
-      q ∈ personenImOrt b o := by
+theorem moveGrob_frame_personen_gleichbleibend {orte : Finset Ort} (p q : Person) (von nach : RaumSet orte) (G : BipartiteOrtGraph orte) (offen : TuerSet orte → Bool) (b : Belegung_safe orte) (hpq : q ≠ p) (hVonNach : von ≠ nach) :
+    ∀ o : RaumSet orte,
+      q ∈ personenImOrt (verschiebePerson p (raumAlsOrt von) (raumAlsOrt nach) b) (raumAlsOrt o) ↔
+      q ∈ personenImOrt b (raumAlsOrt o) := by
   intro o
-  exact moveGrob_frame_personen p von nach b q hpq o
+  exact (moveGrob_frame_personen p von nach b hVonNach) q hpq o
 
 
 -- Nach Bewegung enthält Ausgangsort dieselben Personen - pPerson -> TODO doppelt?
-theorem moveGrob_belegung_von {orte : Finset Ort} (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) :
-    von ≠ nach → personenImOrt (moveGrobBelegung p von nach b) von = (personenImOrt b von).erase p := by
+theorem moveGrob_belegung_von {orte : Finset Ort} (p : Person) (von nach : RaumSet orte) (b : Belegung_safe orte) :
+    von ≠ nach → personenImOrt (verschiebePerson p (raumAlsOrt von) (raumAlsOrt nach) b) (raumAlsOrt von) = (personenImOrt b (raumAlsOrt von)).erase p := by
   intro hVonNach
+  have hVonNachOrt : raumAlsOrt von ≠ raumAlsOrt nach := by
+    intro hGleich
+    apply hVonNach
+    exact raumAlsOrt_injektiv hGleich
   simp [
-    moveGrobBelegung,
+    verschiebePerson,
     setzeBelegung,
     personenImOrt,
-    hVonNach
+    hVonNachOrt
   ]
 
 -- Nach Bewegung enthält Zielort vorherige Personen + p
-theorem moveGrob_belegung_nach {orte : Finset Ort} (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) : 
-  von ≠ nach → personenImOrt (moveGrobBelegung p von nach b) nach = insert p (personenImOrt b nach) := by
+theorem moveGrob_belegung_nach {orte : Finset Ort} (p : Person) (von nach : RaumSet orte) (b : Belegung_safe orte) : 
+  von ≠ nach → personenImOrt (verschiebePerson p (raumAlsOrt von) (raumAlsOrt nach) b) (raumAlsOrt nach) = insert p (personenImOrt b (raumAlsOrt nach)) := by
   intro hVonNach
   simp [
-    moveGrobBelegung,
+    verschiebePerson,
     setzeBelegung,
     personenImOrt
   ]
 
 -- Person befindet sich im Zielort nach move
-theorem moveGrob_person_in_nach {orte : Finset Ort} (p : Person) (von nach : OrtSet orte) (G : BipartiteOrtGraph orte) (offen : OrtSet orte → Bool) (b : Belegung_safe orte) : pre_moveGrobMitTuer G offen p von nach b → p ∈ personenImOrt (moveGrobBelegung p von nach b) nach := by
+theorem moveGrob_person_in_nach {orte : Finset Ort} (p : Person) (von nach : RaumSet orte) (G : BipartiteOrtGraph orte) (offen : TuerSet orte → Bool) (b : Belegung_safe orte) : pre_moveGrobMitTuer G offen p von nach b → p ∈ personenImOrt (verschiebePerson p (raumAlsOrt von) (raumAlsOrt nach) b) (raumAlsOrt nach) := by
   intro hpre
-  rcases hpre with ⟨hpVon, hVonNach, t, htuer, hAdjVon, hAdjNach, hOffen⟩
+  rcases hpre with ⟨hpVon, hVonRaum, hRest⟩
+  rcases hRest with ⟨hNachRaum, hVonNach, hTür⟩
   rw [moveGrob_belegung_nach p von nach b hVonNach]
   simp
 
--- aus hpre folgt dass es eine offene Tür gibt, die von mit nach verbindet -> moveGrobBelegung fehlt hier komplett?
-theorem pre_moveGrobMitTuer_enthaelt_offene_tuer {orte : Finset Ort} (G : BipartiteOrtGraph orte) (offen : OrtSet orte → Bool) (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) : pre_moveGrobMitTuer G offen p von nach b →
-    ∃ t : OrtSet orte,
-      istTuer t.1 ∧
-      G.Adj von t ∧
-      G.Adj nach t ∧
+-- aus hpre folgt dass es eine offene Tür gibt, die von mit nach verbindet -> verschiebePerson fehlt hier komplett?
+theorem pre_moveGrobMitTuer_enthaelt_offene_tuer {orte : Finset Ort} (G : BipartiteOrtGraph orte) (offen : TuerSet orte → Bool) (p : Person) (von nach : RaumSet orte) (b : Belegung_safe orte) : pre_moveGrobMitTuer G offen p von nach b →
+    ∃ t : TuerSet orte,
+      istTuer (tuerAlsOrt t) ∧
+      G.Adj (raumAlsOrt von) (tuerAlsOrt t) ∧
+      G.Adj (raumAlsOrt nach) (tuerAlsOrt t) ∧
       offen t = true := by
   intro hpre
-  rcases hpre with ⟨hpVon, hVonNach, t, htuer, hVonT, hNachT, hOffen⟩
+  rcases hpre with ⟨hpVon, hVonRaum, hRest⟩
+  rcases hRest with ⟨hNachRaum, hVonNach, hOffeneVerbindung⟩
+  rcases hOffeneVerbindung with ⟨t, htuer, hVonT, hNachT, hOffen⟩
   exact ⟨t, htuer, hVonT, hNachT, hOffen⟩
 
 -- Frame: Tür verändert Öffnungsstatus nicht während move
-theorem moveGrob_frame_tuer {orte : Finset Ort} (G : BipartiteOrtGraph orte) (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) (offen : OrtSet orte → Bool) (letzterRaum : Person → Option Raum) :
-    pre_moveGrobMitTuer G offen p von nach b → frame_moveGrob_tuer G von nach offen (moveGrobAktion p von nach b offen letzterRaum).2.1 := by
+theorem moveGrob_frame_tuer {orte : Finset Ort} (G : BipartiteOrtGraph orte) (p : Person) (von nach : RaumSet orte) (b : Belegung_safe orte) (offen : TuerSet orte → Bool) (letzterRaum : Person → Option Raum) :
+    pre_moveGrobMitTuer G offen p von nach b → frame_moveGrob_tuer G von nach offen (aktion_moveGrob p von nach b offen letzterRaum).2.1 := by
   intro hpre
+  rcases hpre with ⟨hpVon, hVonRaum, hNachRaum, hVonNach, hVerbindung⟩
   unfold frame_moveGrob_tuer
-  unfold pre_moveGrobMitTuer at hpre
   constructor
-  · simp [moveGrobAktion]
-  · exact hpre.2.2
+  · simp [aktion_moveGrob]
+  · exact hVerbindung
+
+-- moveGrob geht nur über Räume (einmal im pre und einmal in der aktion selbst)
+theorem grobeBewegung_hat_Raumparameter {orte : Finset Ort} {G : BipartiteOrtGraph orte} {offen : TuerSet orte → Bool} {p : Person} {von nach : RaumSet orte} {b : Belegung_safe orte} (hpre : pre_moveGrobMitTuer G offen p von nach b) :
+    istRaum (raumAlsOrt von) ∧ istRaum (raumAlsOrt nach) := by
+  exact ⟨hpre.2.1, hpre.2.2.1⟩
+
+theorem moveGrobSchritt_nur_zwischen_Raeumen {orte : Finset Ort} (G : BipartiteOrtGraph orte) (p : Person) (von nach : RaumSet orte) (belegungGrob belegungGrob' : Belegung_safe orte) (offen offen' : TuerSet orte → Bool) (letzterRaum letzterRaum' : Person → Option Raum) (hschritt : moveGrobSchritt G offen offen' p von nach belegungGrob belegungGrob' letzterRaum letzterRaum') :
+    istRaum (raumAlsOrt von) ∧ istRaum (raumAlsOrt nach) := by
+  exact ⟨hschritt.1.2.1, hschritt.1.2.2.1⟩
+
+-- Keine grobe Bewegung in eine Tür.
+
+-- Die Verfeinerungsrelation bleibt erhalten.
+
+
+/- ######### 1. Verfeinerung ######### -/
+
+-- todo basic beweise wie oben machen
+
+-- betreteTuer
+def pre_betreteTuer {orte : Finset Ort} (G : BipartiteOrtGraph orte) (offen : TuerSet orte → Bool) (p : Person) (von : RaumSet orte) (t : TuerSet orte) (fein : Belegung_safe orte) : Prop :=
+  p ∈ personenImOrt fein (raumAlsOrt von) ∧
+  istRaum (raumAlsOrt von) ∧
+  istTuer (tuerAlsOrt t) ∧
+  G.Adj (raumAlsOrt von) (tuerAlsOrt t) ∧
+  offen t = true
+
+def post_betreteTuer {orte : Finset Ort} (p : Person) (von : RaumSet orte) (t : TuerSet orte) (fein' : Belegung_safe orte) (letzterRaum letzterRaum' : Person → Option Raum) : Prop :=
+  p ∉ personenImOrt fein' (raumAlsOrt von) ∧
+  p ∈ personenImOrt fein' (tuerAlsOrt t) ∧
+  letzterRaum' = letzterRaum
+
+-- alle anderen personen bleiben an gleichem ort, offen verändert sich nicht, alle anderen personen letzter Raum bleibt gleich
+-- frame gleich für beide Versionen
+def frame_betreteTuer_verlasseTuer {orte : Finset Ort} (p : Person) (fein fein' : Belegung_safe orte) (letzterRaum letzterRaum' : Person → Option Raum) (offen offen' : TuerSet orte → Bool) : Prop :=
+  (∀ q : Person, q ≠ p →
+    ∀ o : OrtSet orte,
+      q ∈ personenImOrt fein' o ↔
+      q ∈ personenImOrt fein o) ∧
+  offen' = offen ∧
+  (∀ q : Person, q ≠ p → letzterRaum' q = letzterRaum q)
+
+def frame_betreteTuer_grob {orte : Finset Ort} (grob grob' : Belegung_safe orte) : Prop :=
+  grob' = grob
+
+def aktion_betreteTuer {orte : Finset Ort} (p : Person) (von : RaumSet orte) (t : TuerSet orte) (fein : Belegung_safe orte) (offen : TuerSet orte → Bool) : Belegung_safe orte × (TuerSet orte → Bool) :=
+  (
+    verschiebePerson p (raumAlsOrt von) (tuerAlsOrt t) fein,
+    offen
+  )
+
+-- verlasseTuer
+def pre_verlasseTuer {orte : Finset Ort} (G : BipartiteOrtGraph orte) (p : Person) (von nach : RaumSet orte) (t : TuerSet orte) (fein : Belegung_safe orte) (letzterRaum : Person → Option Raum) : Prop :=
+  p ∈ personenImOrt fein (tuerAlsOrt t) ∧
+  istRaum (raumAlsOrt nach) ∧
+  istRaum (raumAlsOrt von) ∧
+  istTuer (tuerAlsOrt t) ∧
+  G.Adj (raumAlsOrt von) (tuerAlsOrt t) ∧
+  G.Adj (raumAlsOrt nach) (tuerAlsOrt t) ∧
+  von ≠ nach ∧
+  letzterRaum p = raumVonOrt (raumAlsOrt von)
+
+def post_verlasseTuer {orte : Finset Ort} (p : Person) (nach : RaumSet orte) (t : TuerSet orte) (fein fein' : Belegung_safe orte) (letzterRaum letzterRaum' : Person → Option Raum) : Prop :=
+  p ∉ personenImOrt fein (tuerAlsOrt t) ∧
+  p ∈ personenImOrt fein' (raumAlsOrt nach) ∧
+  letzterRaum' = aktualisiereLetztenRaum letzterRaum p nach
+
+def aktion_verlasseTuer {orte : Finset Ort} (p : Person) (t : TuerSet orte) (nach : RaumSet orte) (fein : Belegung_safe orte) (offen : TuerSet orte → Bool) (letzterRaum : Person → Option Raum) : Belegung_safe orte × (TuerSet orte → Bool) × (Person → Option Raum) :=
+  (
+    verschiebePerson p (tuerAlsOrt t) (raumAlsOrt nach) fein,
+    offen,
+    aktualisiereLetztenRaum letzterRaum p nach
+  )
+
+-- move fein
+def pre_fein {orte : Finset Ort} (G : BipartiteOrtGraph orte) (r1 r2 : RaumSet orte) (t : TuerSet orte) : Prop :=
+  r1 ≠ r2 ∧
+  istRaum (raumAlsOrt r1) ∧
+  istRaum (raumAlsOrt r2) ∧
+  istTuer (tuerAlsOrt t) ∧
+  G.Adj (raumAlsOrt r1) (tuerAlsOrt t) ∧
+  G.Adj (raumAlsOrt r2) (tuerAlsOrt t)
+
+def betreteTuerSchritt {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (von nach : RaumSet orte) (t : TuerSet orte) (Z Z' : Zustand orte personen) : Prop :=
+  pre_fein G von nach t ∧
+  pre_betreteTuer G Z.offen p von t Z.belegungFein ∧
+  Z'.belegungGrob = Z.belegungGrob ∧
+  let aktion := aktion_betreteTuer p von t Z.belegungFein Z.offen
+  Z'.belegungFein = aktion.1 ∧
+  Z'.offen = aktion.2 ∧
+  post_betreteTuer p von t Z.belegungFein Z.letzterRaum Z'.letzterRaum
+
+def verlasseTuerSchritt {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (von nach : RaumSet orte) (t : TuerSet orte) (Z Z' : Zustand orte personen) : Prop :=
+  pre_fein G von nach t ∧
+  pre_verlasseTuer G p von nach t Z.belegungFein Z.letzterRaum ∧
+  Z'.belegungGrob = Z.belegungGrob ∧
+  let aktion := aktion_verlasseTuer p t nach Z.belegungFein Z.offen Z.letzterRaum
+  Z'.belegungFein = aktion.1 ∧
+  Z'.offen = aktion.2.1 ∧
+  Z'.letzterRaum = aktion.2.2 ∧
+  post_verlasseTuer p nach t Z.belegungFein Z'.belegungFein Z.letzterRaum Z'.letzterRaum
+
+def aktion_moveFein {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (r1 r2 : RaumSet orte) (t : TuerSet orte) (Z0 Z1 Z2 : Zustand orte personen) : Prop :=
+  betreteTuerSchritt G p r1 r2 t Z0 Z1 ∧
+  verlasseTuerSchritt G p r1 r2 t Z1 Z2
+
+def aktion_moveFein_stutter {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (r1 r2 : RaumSet orte) (t : TuerSet orte) (Z0 Z1 Z2 Z3 : Zustand orte personen) : Prop :=
+  betreteTuerSchritt G p r1 r2 t Z0 Z1 ∧
+  stutterGrob Z1 Z2 ∧
+  verlasseTuerSchritt G p r1 r2 t Z2 Z3
+
+def relation_verfeinerung {orte : Finset Ort} {personen : Finset Person} (fein grob : Belegung_safe orte) : Prop :=
+  ∀ p : PersonSet personen, ∀ r : RaumSet orte,
+    istRaum (raumAlsOrt r) →
+    p.val ∈ personenImOrt fein (raumAlsOrt r) →
+    p.val ∈ personenImOrt grob (raumAlsOrt r)
 
 /-
   Beispiel
