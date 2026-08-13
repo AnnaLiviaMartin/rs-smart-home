@@ -240,8 +240,8 @@ def hatOffeneVerbindung {orte : Finset Ort} (G : BipartiteOrtGraph orte) (offen 
 
 -- Vorbedingung: Person p ist im Raum von, von ≠ nach, es gibt eine Tür die die beiden Räume verbindet
 def pre_moveGrobMitTuer {orte : Finset Ort} (G : BipartiteOrtGraph orte) (offen : OrtSet orte → Bool) (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) : Prop :=
-  p ∈ personenImOrt b von ∧ 
-  von ≠ nach ∧ 
+  p ∈ personenImOrt b von ∧
+  von ≠ nach ∧
   hatOffeneVerbindung G offen von nach
 
 -- Nachbedingung
@@ -293,16 +293,16 @@ def moveGrobSchritt {orte : Finset Ort} (G : BipartiteOrtGraph orte) (offen offe
   Nutzung von Zustand (extra)
 -/
 
--- Beweise dass das auch als Zustand mit BipartiteOrtGraph geht und nicht nur durch möglicherweise inkorrekte Listen etc. 
+-- Beweise dass das auch als Zustand mit BipartiteOrtGraph geht und nicht nur durch möglicherweise inkorrekte Listen etc.
 def moveGrobSchrittZustand {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (von nach : OrtSet orte) (Z Z' : Zustand orte personen) : Prop :=
   ∃ t : OrtSet orte, -- tuer zwischen von und nach
       istTuer t.1 ∧
       G.Adj von t ∧
       G.Adj nach t ∧
       Z.offen t = true  ∧
-  pre_moveGrobMitTuer G Z.offen p von nach Z.belegungGrob ∧ 
-  Z'.belegungGrob = moveGrobBelegung p von nach Z.belegungGrob ∧ 
-  Z'.offen = setzeOffen Z.offen t true ∧ 
+  pre_moveGrobMitTuer G Z.offen p von nach Z.belegungGrob ∧
+  Z'.belegungGrob = moveGrobBelegung p von nach Z.belegungGrob ∧
+  Z'.offen = setzeOffen Z.offen t true ∧
   Z'.letzterRaum = aktualisiereLetztenRaum Z.letzterRaum p nach
 
 /-
@@ -390,7 +390,7 @@ theorem moveGrob_belegung_von {orte : Finset Ort} (p : Person) (von nach : OrtSe
   ]
 
 -- Nach Bewegung enthält Zielort vorherige Personen + p -> TODO doppelt?
-theorem moveGrob_belegung_nach {orte : Finset Ort} (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) : 
+theorem moveGrob_belegung_nach {orte : Finset Ort} (p : Person) (von nach : OrtSet orte) (b : Belegung_safe orte) :
   von ≠ nach → personenImOrt (moveGrobBelegung p von nach b) nach = insert p (personenImOrt b nach) := by
   intro hVonNach
   simp [
@@ -501,6 +501,46 @@ def myBipartiteGraph : BipartiteOrtGraph meineOrte where
         | (revert hTuer; simp [istTuer]; done)
         | exact absurd (hAdj : myAdjRelBool _ _ = true) (by decide)
         | rfl
-        | sorry -- todo fertig machen
+        | (exfalso; revert hAdj; simp [myAdjRelBool, OrteSindBenachbart, myEdges])
 
--- TODO: initial Zustand als Beispiel anlegen
+-- Initialer Zustand als Beispiel für meineOrte
+
+def person1 : Person := Person.Bewohner 1
+
+def meinePersonen : Finset Person := {person1}
+
+def initialBelegung : Belegung_safe meineOrte :=
+  ∅ |> Finmap.insert ⟨room1, by simp [meineOrte]⟩ ({person1} : Finset Person)
+
+def initialOffen : OrtSet meineOrte → Bool :=
+  fun _ => false
+
+def initialLetzterRaum : Person → Option Raum :=
+  fun _ => none
+
+def initialZustand : Zustand meineOrte meinePersonen where
+  belegungGrob := initialBelegung
+  belegungFein := initialBelegung
+  offen := initialOffen
+  letzterRaum := initialLetzterRaum
+
+  grob_einePersonGenauEinOrt := by
+    rintro ⟨p, hp⟩
+    simp [meinePersonen] at hp
+    subst p
+    native_decide +revert
+
+  fein_einePersonGenauEinOrt := by
+    rintro ⟨p, hp⟩
+    simp [meinePersonen] at hp
+    subst p
+    native_decide +revert
+
+  tuerOffenWennPersonEnthalten := by
+    rintro ⟨o, ho⟩
+    cases o with
+    | Raum r =>
+        trivial
+    | Tuer t =>
+        intro hBelegt
+        simp [initialBelegung] at hBelegt
