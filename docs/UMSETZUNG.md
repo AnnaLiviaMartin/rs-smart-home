@@ -88,8 +88,9 @@ Zusätzlich zum Betreten der Tür ist also ein weiterer Zwischenschritt nötig:
 
 Da es nun meherere Personen gibt, die in dem Modell exisiteren, ist es nun wichtig, dass die Personen, die keine Räume wechseln, in ihren aktuellen Räumen bleiben. Dies wird durch Frame-Conditions ermöglicht, die in den einzelnen Stutter-Vorgängen gesetzt sind. Stutter-Vorgänge werden verwendet, um Alloy mit Einschränkungen hinsichtlich der Modellgenerierung an Verhalten außerhalb der definierten Logik zu hindern.
 
-Stutter_Schritt_1: Personen, 
-
+Stutter_Schritt_1: PersonenFein, PersonenGrob ändern sich nicht; Türen - 1 können zufallen?
+Stutter_Schritt_2: PersonenGrob, LetzterRaum; Türen - 1 können zufallen
+Stutter_Schritt_3: nix
 
 
 Frame Conditions mit stutter, damit personen nicht spawnen
