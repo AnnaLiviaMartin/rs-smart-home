@@ -167,6 +167,13 @@ structure BipartiteOrtGraph (orte : Finset Ort) extends GebaeudePlan orte where 
     (match t1,t2 with | Tuer.tuer a1, Tuer.tuer a2 => a1 ≠ a2) -- jedeTuerHatEigenesAuthentifizierungsGeraet
   gartenHatGenauEinenNachbarn : gartenHatGenauEineTuer toSimpleGraph
 
+-- Belegung lesen
+def personenImOrt {orte : Finset Ort} (b : Belegung_safe orte) (o : OrtSet orte) : Finset Person :=
+  (b.lookup o).getD ∅
+
+def istBelegt {orte : Finset Ort} (b : Belegung_safe orte) (p : Person) (o : OrtSet orte) : Prop :=
+  p ∈ personenImOrt b o
+
 /-
   Objekte, die sich verändern können: Zustand ist die momentane Ausprägung
 -/
@@ -179,14 +186,22 @@ def belegtePersonen {orte : Finset Ort} (b : Belegung_safe orte) (o : OrtSet ort
 def tuerOffenWennPerson {orte} (belegungFein : Belegung_safe orte) (offen : TuerSet orte → Bool) : Prop :=
   ∀ o : TuerSet orte, (belegungFein.lookup (tuerAlsOrt o)).getD ∅ ≠ ∅ → offen o = true
 
+def verfeinerungsrelation {orte : Finset Ort} {personen : Finset Person} (grob fein : Belegung_safe orte) : Prop :=
+  ∀ p : PersonSet personen,
+    ∀ r : OrtSet orte,
+      istRaum r →
+      p.1 ∈ personenImOrt fein r →
+      p.1 ∈ personenImOrt grob r
+
 structure Zustand (orte : Finset Ort) (personen : Finset Person) where --dynamische
   belegungGrob : Belegung_safe orte
-  belegungFein : Belegung_safe orte -- einePersonInGenauEinemOrt
+  belegungFein : Belegung_safe orte
   offen : TuerSet orte → Bool -- jede Tür hat individuell ein "offen"
   letzterRaum : Person → Option Raum -- 1 oder kein Raum
   grob_einePersonGenauEinOrt : einePersonGenauEinOrt (personen := personen) belegungGrob
   fein_einePersonGenauEinOrt : einePersonGenauEinOrt (personen := personen) belegungFein
   tuerOffenWennPersonEnthalten : tuerOffenWennPerson belegungFein offen -- Wenn Personen in der Tür sind, ist sie offen. Wenn keine Personen drin sind, darf sie offen oder geschlossen sein.
+  verfeinerung : verfeinerungsrelation (personen := personen) belegungGrob belegungFein -- wie beide Belegungen zusammenhängen
 
 /-
   Invarianten: was trotz Veränderung gleich bleibt
@@ -209,13 +224,6 @@ def raumVonOrt {orte : Finset Ort} (o : OrtSet orte) : Option Raum :=
 
 def aktualisiereLetztenRaum {orte : Finset Ort} (letzterRaum : Person → Option Raum) (p : Person) (nach : RaumSet orte) :
     Person → Option Raum := Function.update letzterRaum p (raumVonOrt (raumAlsOrt nach))
-
--- Belegung lesen
-def personenImOrt {orte : Finset Ort} (b : Belegung_safe orte) (o : OrtSet orte) : Finset Person :=
-  (b.lookup o).getD ∅
-
-def istBelegt {orte : Finset Ort} (b : Belegung_safe orte) (p : Person) (o : OrtSet orte) : Prop :=
-  p ∈ personenImOrt b o
 
 -- Belegung verändern
 def setzeBelegung {orte : Finset Ort} (b : Belegung_safe orte) (o : OrtSet orte) (personen : Finset Person) :
@@ -304,7 +312,6 @@ def moveGrobSchrittZustand {orte : Finset Ort} {personen : Finset Person} (G : B
 /-
   Beweise moveGrob
 -/
--- TODO: prüfen dass tür offen ist und letzterRaum gesetzt wird
 
 -- Wenn zwei Räume nach der Umwandlung in OrtSet gleich sind, dann waren auch die ursprünglichen Räume gleich.
 theorem raumAlsOrt_injektiv {orte : Finset Ort} : Function.Injective (@raumAlsOrt orte) := by
@@ -389,7 +396,7 @@ theorem moveGrob_frame_personen {orte : Finset Ort} (p : Person) (von nach : Rau
         hONach
       ]
 
-theorem moveGrob_frame_personen_gleichbleibend {orte : Finset Ort} (p q : Person) (von nach : RaumSet orte) (G : BipartiteOrtGraph orte) (offen : TuerSet orte → Bool) (b : Belegung_safe orte) (hpq : q ≠ p) (hVonNach : von ≠ nach) :
+theorem moveGrob_frame_personen_gleichbleibend {orte : Finset Ort} (p q : Person) (von nach : RaumSet orte) (G : BipartiteOrtGraph orte) (b : Belegung_safe orte) (hpq : q ≠ p) (hVonNach : von ≠ nach) :
     ∀ o : RaumSet orte,
       q ∈ personenImOrt (verschiebePerson p (raumAlsOrt von) (raumAlsOrt nach) b) (raumAlsOrt o) ↔
       q ∈ personenImOrt b (raumAlsOrt o) := by
