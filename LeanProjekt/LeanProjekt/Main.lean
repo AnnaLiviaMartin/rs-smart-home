@@ -193,6 +193,15 @@ def verfeinerungsrelation {orte : Finset Ort} {personen : Finset Person} (grob f
       p.1 ∈ personenImOrt fein r →
       p.1 ∈ personenImOrt grob r
 
+def verfeinerung_tuer_letzterRaum {orte : Finset Ort} {personen : Finset Person} (grob fein : Belegung_safe orte) (letzterRaum : Person → Option Raum) : Prop :=
+  ∀ p : PersonSet personen,
+    ∀ t : TuerSet orte,
+      p.1 ∈ personenImOrt fein (tuerAlsOrt t) →
+      ∃ r : Raum,
+        letzterRaum p.1 = some r ∧
+        ∃ hr : Ort.Raum r ∈ orte,
+          p.1 ∈ personenImOrt grob ⟨Ort.Raum r, hr⟩ ∧ p.1 ∈ personenImOrt fein ⟨Ort.Raum r, hr⟩
+
 structure Zustand (orte : Finset Ort) (personen : Finset Person) where --dynamische
   belegungGrob : Belegung_safe orte
   belegungFein : Belegung_safe orte
@@ -201,7 +210,8 @@ structure Zustand (orte : Finset Ort) (personen : Finset Person) where --dynamis
   grob_einePersonGenauEinOrt : einePersonGenauEinOrt (personen := personen) belegungGrob
   fein_einePersonGenauEinOrt : einePersonGenauEinOrt (personen := personen) belegungFein
   tuerOffenWennPersonEnthalten : tuerOffenWennPerson belegungFein offen -- Wenn Personen in der Tür sind, ist sie offen. Wenn keine Personen drin sind, darf sie offen oder geschlossen sein.
-  verfeinerung : verfeinerungsrelation (personen := personen) belegungGrob belegungFein -- wie beide Belegungen zusammenhängen
+  verfeinerung : verfeinerungsrelation (personen := personen) belegungGrob belegungFein -- Jede Person, die sich im feinen Modell in einem Raum befindet, muss sich dort auch im groben Modell befinden.
+  tuerVerfeinerung : verfeinerung_tuer_letzterRaum (personen := personen) belegungGrob belegungFein letzterRaum -- Für jede betrachtete Person und jede Tür gilt: Wenn die Person im feinen Modell in dieser Tür steht, dann gibt es einen Raum, der als ihr letzter Raum gespeichert ist, und die Person befindet sich sowohl im groben als auch im feinen Modell in diesem Raum.
 
 /-
   Invarianten: was trotz Veränderung gleich bleibt
