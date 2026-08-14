@@ -28,6 +28,7 @@ Mit Alloy werden insbesondere folgende Eigenschaften untersucht:
 - Geschlossene Türen können nicht ohne Authentifizierung passiert werden.
 - Ereignisse verletzen keine Systemgarantien.
 
+## Event-B
 ### Umsetzung des Groben Modells
 
 Um erste Bewegungsabläufe von Personen zwischen Räumen modellieren zu können, jedoch bereits den Grundaufbau des Gebäudes für die nächsten Verfeinerungsschritte vorzubereiten, haben wir zunächst Personen und unterschiedliche Orte definiert. 
@@ -74,28 +75,42 @@ Wenn die Person im Feinen Modell in der Tür steht, ist das aus Sicht des Groben
 
 ### Umsetzung der Authentifizierung
 
-Im zweiten Verfeinerungsschritt, wurde nun die Möglichkeit eingeführt, dass Bewohner sich authentifizieren müssen, um eine Tür zwischen benachbarten Räumen öffnen zu können. Wenn die Tür geöffnet wurde, besteht für Personen wieder die Möglichkeit eines Raumwechsels. 
+Im zweiten Verfeinerungsschritt, wurde nun die Vorraussetung eingeführt, dass Bewohner sich authentifizieren müssen, um eine Tür zwischen benachbarten Räumen öffnen zu können. Wenn die Tür geöffnet wurde, besteht für Personen wieder die Möglichkeit eines Raumwechsels. 
 
-Da sich nur Bewohner Authentifizieren können, ist es nun notwendig, Personen in Bewohner und Gäste aufzuteilen. 
+Da sich nur Bewohner Authentifizieren können, ist es nun notwendig, Personen in Bewohner und Gäste aufzuteilen. Das Bewegen zwischen Räumen mit einer verschlossenen Tür wird für Gäste also erst möglich, wenn eine Bewohner die Tür vorher aufgeschlossen hat. 
 
-Zusätzlich zum Betreten der Tür ist also ein weiterer Zwischenschritt nötig:
+Für eine bessere Visualisierung wurde ich nachfolgenden Grafiken ein Authentifizierungsobjekt eingeführt, dieses ist in Alloy allerdings nicht explizit vorhanden, die Autorisierung findet hier direkt über die Tür statt. 
+
+![Modell mit Authentifizierung der zweiten Verfeinerung](pictures/Alloy_Raumplan_Authentifizierung.svg)
+
+### Synchronisierung der Modellebenen
+
+Da das Grobe Modell als Blackbox für die verfeinerten Schritte betrachtet werden kann, allerdings die Ergebnisse der Feineren Modelle sich im Groben Modell wiederspiegeln müssen, ist es nun notwendig, die Abläufe der Ferfeinerungsschritte zu synchronisieren. Dabei wird für jede neu hinzugefügten Verfeinerungsschritt ein Stutter-Vorgang im darunterliegenden Modell eingeführt. 
+
+Betrachtet man beispielsweise den ersten Schritt der Autorisierung, darf Alloy in keinem der Modelle Änderungen der Invarianten vornehmen, ausgenommen, dass sich die Verbindungstür der Nachbarräume öffnet. Im Stutter des ersten Schritts auf allen Modell-Ebenen dürfen entsprechend die Personen des Groben und Feinen Modells, die Variable des letzten Raumes der Personen und die restlichen Türen nicht verädert werden (siehe Alloymodell: StutterSchritt_1).
+
+Insgesamt ergibt sich folgende Tabelle der Modell-Vorgänge:
 
 |  | Schritt 1 | Schritt 2 | Schritt 3 |
 |----------|----------|----------|----------|
 | Grob   | Stutter   | Stutter   | betreteRaum |
 | Fein   | Stutter   | betreteTuer   | verlasseTuer |
 | Auth   | Tuer oeffnen   | betreteTuer   | verlasseTuer |
+| Stutter| Stutter_1    | Stutter_2    |      |
 
-Da es nun meherere Personen gibt, die in dem Modell exisiteren, ist es nun wichtig, dass die Personen, die keine Räume wechseln, in ihren aktuellen Räumen bleiben. Dies wird durch Frame-Conditions ermöglicht, die in den einzelnen Stutter-Vorgängen gesetzt sind. Stutter-Vorgänge werden verwendet, um Alloy mit Einschränkungen hinsichtlich der Modellgenerierung an Verhalten außerhalb der definierten Logik zu hindern.
+Gleiche Modell-Vorgänge visualisiert:
+
+![Synchronisierung der Verfeinerungsschritte](pictures/Alloy_Raumplan_Synchronisierung.svg)
+
+Da das Modell immer nur Schritte einzelner Personen ausführt und auch beim Türenöffnen immer nur ein Objekt explizit angesprochen wird, ist es nun notwendig, Alloy durch Frame Contitions daran zu hindern, weitere, nicht explizit definierte Schritte im Modell auszuführen. Das wird in den einzelnen Zustandsübergängen durch Frame-Conditions ermöglicht, die die Änderung restlicher gleicher Objekte untersagt (siehe Alloy-Modell: schrittGrob, betreteTuer, verlasseTuer).
+
+<!--Da es nun meherere Personen gibt, die in dem Modell exisiteren, ist es nun wichtig, dass die Personen, die keine Räume wechseln, in ihren aktuellen Räumen bleiben. Dies wird durch Frame-Conditions ermöglicht, die in den einzelnen Stutter-Vorgängen gesetzt sind. Stutter-Vorgänge werden verwendet, um Alloy mit Einschränkungen hinsichtlich der Modellgenerierung an Verhalten außerhalb der definierten Logik zu hindern. 
 
 Stutter_Schritt_1: PersonenFein, PersonenGrob ändern sich nicht; Türen - 1 können zufallen?
 Stutter_Schritt_2: PersonenGrob, LetzterRaum; Türen - 1 können zufallen
-Stutter_Schritt_3: nix
+Stutter_Schritt_3: nix -->
 
-
-Frame Conditions mit stutter, damit personen nicht spawnen
-
-### Umsetzung der Gebäude Struktur mit mehreren Räumen
+### Umsetzung der Gebäude und Objekt Struktur mit mehreren Räumen
 
 
 
