@@ -4,6 +4,61 @@ import Mathlib.Combinatorics.SimpleGraph.Basic
 import Mathlib.Data.Set.Card
 import Mathlib.Tactic.FinCases
 
+
+/-
+  TODO:
+
+  Was insgesamt bewiesen wird: raumset/ortset checken, kommentare schreiben, aufräumen, schreibweise umändern von \and in ->, ungenutzte Methoden löschen, Feedback der KI einarbeiten
+
+  Statische Struktur
+  Räume und Türen sind disjunkt.
+  Nur Raum–Tür-Kanten sind erlaubt.
+  Nachbarschaft ist symmetrisch.
+  Graph ist schleifenfrei.
+  Genau ein Garten existiert.
+  Der Garten hat genau eine Tür.
+  Jede Tür verbindet genau zwei Räume.
+
+  Belegung
+  Jede betrachtete Person befindet sich im groben Modell genau einmal.
+  Jede betrachtete Person befindet sich im feinen Modell genau einmal.
+  Keine Person befindet sich grob in einer Tür.
+  Nur bekannte Personen kommen in den Belegungen vor.
+  Eine belegte feine Tür ist offen.
+  Die feine Belegung verfeinert die grobe Belegung.
+  Die Verfeinerungsrelation bleibt erhalten.
+
+  Grobe Bewegung
+  Person verlässt den Ausgangsraum.
+  Person kommt im Zielraum an.
+  Andere Personen bleiben unverändert. 
+  Die Personen im von Raum bleiben unverändert bis auf p. 
+  Nach Bewegung enthält Zielort vorherige Personen + p.
+  Türen und Graph bleiben unverändert.
+  Es gibt eine offene Tür die die zwei Räume miteinander verbindet.
+  Keine grobe Bewegung in/über eine Tür.
+  Der Öffnungsstatus der Tür zwischen den zwei Räumen verändert sich nicht.
+  Keine grobe Bewegung in eine Tür. -> durch Typen sichergestellt
+
+  Feine Bewegung
+  Person kann eine offene Tür betreten.
+  Person befindet sich danach in der Tür.
+  Grobes Modell bleibt beim Betreten unverändert.
+  Person kann die Tür in den Zielraum verlassen.
+  Person befindet sich danach im Zielraum.
+  Der grobe Schritt stimmt mit dem Ergebnis des feinen Schritts überein.
+  Andere Personen bleiben unverändert.
+  letzterRaum wird korrekt aktualisiert. -> erst nach verlasseTuer ist der letzteRaum neu gesetzt worden, nicht schon bei betreteTuer
+  Die Verfeinerungsrelation bleibt nach Aktionen erhalten.
+
+  Türöffnung
+  Nur Bewohner:innen dürfen Türen öffnen.
+  Die Person muss an die Tür angrenzen.
+  Eine geschlossene Tür wird geöffnet.
+  Andere Öffnungszustände bleiben unverändert.
+  Belegungen bleiben unverändert.
+-/
+
 /-
   Objekte, uebernommen logisch aus Alloy, statisch: GebaeudePlan ist die feste Topologie
 -/
