@@ -1181,6 +1181,12 @@ theorem gast_ist_keine_bewohnerin (g : Person) (hgast : istGast g) :
   cases g <;> 
   simp [istGast, istBewohner] at *
 
+-- die zu oeffnende tuer ist neben dem raum in dem die person ist
+theorem oeffneTuer_raum_grenzt_an_tuer {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (r : RaumSet orte) (t : TuerSet orte) (Z : Zustand orte personen) (hpre : pre_oeffneTuer G p r t Z) :
+    G.Adj (raumAlsOrt r) (tuerAlsOrt t) := by
+  rcases hpre with ⟨hBewohner, hpRaum, hAdj, hGeschlossen⟩
+  exact hAdj
+
 -- gaeste koennen aktion nicht ausfuehren
 theorem gast_kann_keine_Tuer_oeffnen {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (g : Person) (r : RaumSet orte) (t : TuerSet orte) (Z : Zustand orte personen) (hgast : istGast g) :
     ¬ pre_oeffneTuer G g r t Z := by
@@ -1194,6 +1200,11 @@ theorem oeffneTuer_tuer_ist_offen {orte : Finset Ort} {personen : Finset Person}
     (oeffneTuer Z.offen t) t = true := by
   simp [oeffneTuer]
 
+-- vor oeffnen war die tuer geschlossen
+theorem oeffneTuer_vorher_geschlossen {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (r : RaumSet orte) (t : TuerSet orte) (Z : Zustand orte personen) (hpre : pre_oeffneTuer G p r t Z) :
+    Z.offen t = false := by
+  exact hpre.2.2.2
+
 -- nach oeffen tuer ist die tuer auch offen
 theorem oeffneTuerSchritt_tuer_ist_offen {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (r : RaumSet orte) (t : TuerSet orte) (Z Z' : Zustand orte personen) (hschritt : oeffneTuerSchritt G p r t Z Z') :
     Z'.offen t = true := by
@@ -1206,22 +1217,17 @@ theorem oeffneTuerSchritt_grob_unveraendert {orte : Finset Ort} {personen : Fins
     frame_oeffneTuer_grob Z.belegungGrob Z'.belegungGrob := by
   exact hschritt.2.1
 
+-- belegung bleibt unveraendert
 theorem oeffneTuerSchritt_fein_unveraendert {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (r : RaumSet orte) (t : TuerSet orte) (Z Z' : Zustand orte personen) (hschritt : oeffneTuerSchritt G p r t Z Z') :
     frame_oeffneTuer_fein Z.belegungFein Z'.belegungFein := by
   exact hschritt.2.2.1
 
+-- der letzteRaum aendert sich nicht beim aufschließen der tuer
 theorem oeffneTuerSchritt_letzterRaum_unveraendert {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (r : RaumSet orte) (t : TuerSet orte) (Z Z' : Zustand orte personen) (hschritt : oeffneTuerSchritt G p r t Z Z') :
     frame_oeffneTuer_letzterRaum Z.letzterRaum Z'.letzterRaum := by
   exact hschritt.2.2.2.2.1
 
-theorem oeffneTuer_andere_tueren_unveraendert {orte : Finset Ort} (offen : TuerSet orte → Bool) (t : TuerSet orte) :
-    frame_oeffneTuer_offen t offen (oeffneTuer offen t) := by
-  unfold frame_oeffneTuer_offen
-  constructor
-  · simp [oeffneTuer]
-  · intro t' hne
-    simp [oeffneTuer, hne]
-
+-- andere tueren erhalten ihren öffnungsstatus
 theorem oeffneTuer_frame_offen {orte : Finset Ort} {personen : Finset Person} (t : TuerSet orte) (Z : Zustand orte personen) :
     frame_oeffneTuer_offen t Z.offen (oeffneTuer Z.offen t) := by
   unfold frame_oeffneTuer_offen
@@ -1229,6 +1235,14 @@ theorem oeffneTuer_frame_offen {orte : Finset Ort} {personen : Finset Person} (t
   · simp [oeffneTuer]
   · intro t' hne
     simp [oeffneTuer, hne]
+
+-- andere tueren bleiben unveraendert
+theorem oeffneTuerSchritt_andere_tueren_unveraendert {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (r : RaumSet orte) (t m : TuerSet orte) (Z Z' : Zustand orte personen) (hne : m ≠ t) (hschritt : oeffneTuerSchritt G p r t Z Z') :
+    Z'.offen m = Z.offen m := by
+  rcases hschritt with ⟨hpre, hGrob, hFein, hOffen, hLetzterRaum, hpost⟩
+  rw [hOffen]
+  have hframe : frame_oeffneTuer_offen t Z.offen (oeffneTuer Z.offen t) := oeffneTuer_frame_offen t Z
+  exact hframe.2 m hne
 
 -- todo verfeinerung + relation zusammen
 
