@@ -1167,6 +1167,13 @@ def oeffneTuerSchritt {orte : Finset Ort} {personen : Finset Person} (G : Bipart
   Z'.letzterRaum = Z.letzterRaum ∧
   post_oeffneTuer t Z'
 
+def aktion_grob_fein_oeffne_stutter {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (r1 r2 : RaumSet orte) (t : TuerSet orte) (Z0 Z1 Z2 Z3 Z4 : Zustand orte personen) : Prop :=
+  oeffneTuerSchritt G p r1 t Z0 Z1 ∧
+  betreteTuerSchritt G p r1 r2 t Z1 Z2 ∧
+  stutter Z2 Z3 ∧
+  verlasseTuerSchritt G p r1 r2 t Z3 Z4
+
+
 -- Beweise
 
 -- bewohner koennen aktion ausfuehren
@@ -1244,7 +1251,30 @@ theorem oeffneTuerSchritt_andere_tueren_unveraendert {orte : Finset Ort} {person
   have hframe : frame_oeffneTuer_offen t Z.offen (oeffneTuer Z.offen t) := oeffneTuer_frame_offen t Z
   exact hframe.2 m hne
 
--- todo verfeinerung + relation zusammen
+-- verfeinerung + relation zusammen
+
+-- Hilfslemma
+theorem relation_nach_oeffneTuer {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (r : RaumSet orte) (t : TuerSet orte) (Z Z' : Zustand orte personen) (hrel : relation_verfeinerung (personen := personen) Z.belegungFein Z.belegungGrob) (hschritt : oeffneTuerSchritt G p r t Z Z') : relation_verfeinerung (personen := personen)   Z'.belegungFein Z'.belegungGrob := by
+  intro q s hsraum hq
+  have hGrob : Z'.belegungGrob = Z.belegungGrob := by
+    exact hschritt.2.1
+  have hFein : Z'.belegungFein = Z.belegungFein := by
+    exact hschritt.2.2.1
+  rw [hFein] at hq
+  rw [hGrob]
+  exact hrel q s hsraum hq
+
+theorem relation_nach_aktion_grob_fein_oeffne_stutter {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (r1 r2 : RaumSet orte) (t : TuerSet orte) (Z0 Z1 Z2 Z3 Z4 : Zustand orte personen) (hrel : relation_verfeinerung (personen := personen) Z0.belegungFein Z0.belegungGrob) (haktion : aktion_grob_fein_oeffne_stutter G p r1 r2 t Z0 Z1 Z2 Z3 Z4) :
+  relation_verfeinerung (personen := personen) Z4.belegungFein Z4.belegungGrob := by
+  rcases haktion with ⟨hOeffne, hBetrete, hStutter, hVerlasse⟩
+  -- Nach dem Öffnen bleiben grob und fein unverändert.
+  have hrel1 : relation_verfeinerung (personen := personen) Z1.belegungFein Z1.belegungGrob := relation_nach_oeffneTuer G p r1 t Z0 Z1 hrel hOeffne
+  -- Beim Betreten wird nur das feine Modell verändert.
+  have hrel2 : relation_verfeinerung (personen := personen) Z2.belegungFein Z2.belegungGrob := relation_nach_betreteTuer G p r1 r2 t Z1 Z2 hrel1 hBetrete
+  -- Der Stutter-Schritt verändert weder grob noch fein.
+  have hrel3 : relation_verfeinerung (personen := personen) Z3.belegungFein Z3.belegungGrob := relation_nach_stutterGrob Z2 Z3 hrel2 hStutter
+  -- Beim Verlassen werden fein und grob konsistent weiterbewegt.
+  exact relation_nach_verlasseTuer G p r1 r2 t Z3 Z4 hrel3 hVerlasse
 
 /-
   Beispiel
