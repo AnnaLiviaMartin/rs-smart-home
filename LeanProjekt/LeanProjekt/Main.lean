@@ -1126,6 +1126,7 @@ theorem verlasseTuer_frame_personen_grob {orte : Finset Ort} {personen : Finset 
 
 /- ######### 2. Verfeinerung ######### -/
 
+
 /-
   Beispiel
 -/
