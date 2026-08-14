@@ -8,9 +8,7 @@ one sig True, False extends Bool {}
 
 //#################### Objekte
 
-abstract sig PERSON{
-	var letzterRaum: lone RAUM
-}
+abstract sig PERSON{}
 
 sig BEWOHNER extends PERSON {}
 
@@ -81,7 +79,6 @@ fact tuerVerbindetZweiRaeume {
 pred init {
 	all p: PERSON | p in GARTEN.personenImOrtGrob
 	all p: PERSON | p in GARTEN.personenImOrtFein
-	all p: PERSON | p.letzterRaum = GARTEN
 	all t: TUER | t.offen = False
 }
 
@@ -107,11 +104,11 @@ pred betreteTuer[p: PERSON, von: RAUM, t: TUER]{
 	p in von.personenImOrtFein
 	t in von.nachbarn
 	t.offen in True
+	#(t.personenImOrtFein) = 0
 
 	//post
 	von.personenImOrtFein' = von.personenImOrtFein - p
 	t.personenImOrtFein' = t.personenImOrtFein + p
-	p.letzterRaum' = von
 
 	//frame
 	all o: ORT - (von + t) | o.personenImOrtFein' = o.personenImOrtFein
@@ -121,12 +118,10 @@ pred verlasseTuer[p: PERSON, nach: RAUM, t: TUER]{
 	//pre
 	p in t.personenImOrtFein
 	nach in t.nachbarn
-	p.letzterRaum != nach
 
 	//post
 	t.personenImOrtFein' = t.personenImOrtFein - p
 	nach.personenImOrtFein' = nach.personenImOrtFein + p
-//	p.letzterRaum' = t
 
 	//frame
 	all o: ORT - (nach + t) | o.personenImOrtFein' = o.personenImOrtFein
@@ -163,20 +158,20 @@ pred oeffneTuer [p: PERSON, tuer: TUER] {
 	//post
 	tuer.offen' = True
 
-	//frame
+	//frame in Stutter_Schritt_1 ausgelagert
 }
 
 pred tuerBleibtOffenOderFaelltZu {
 	all t: TUER | t.offen = False implies t.offen' = False //da ich nicht definiert habe, dass eine Tür von true auf false springen kann, ist die Lücke offen geblieben, damit die Tür sich schließen kann, sofern sie offen ist.
 }
 
-fact show {
+pred show {
 	init
 	always schrittSehrFein 
 //	or stutter //Stuttervorgänge werden stand jetzt im feinen Modell nicht ausgeführt, Das Modell ist also gezwungen, bei jedem Schritt eine Person im feinen Modell zu bewegen. 
 }
 
-//run show for exactly 2 PERSON, 1 GAST, 1 BEWOHNER, exactly 1 GARTEN, exactly 3 TUER, exactly 4 RAUM
+run show for exactly 2 PERSON, 1 GAST, 1 BEWOHNER, exactly 1 GARTEN, exactly 3 TUER, exactly 4 RAUM
 // bitte nur ein run show von beidem oder erklären warum beide nötig sind
 //run show
 
@@ -186,13 +181,11 @@ pred StutterSchritt_1 [tuer: TUER] {
 	all o: ORT | o.personenImOrtFein' = o.personenImOrtFein
 	all o: ORT | o.personenImOrtGrob' = o.personenImOrtGrob
 	all t: TUER - tuer | t.offen' = t.offen
-	all p: PERSON | p.letzterRaum' =  p.letzterRaum
 }
 
 pred StutterSchritt_2 [tuer: TUER]{
 	all o: ORT | o.personenImOrtGrob' = o.personenImOrtGrob
 	all t: TUER - tuer | t.offen' = t.offen
-	all p: PERSON | p.letzterRaum' =  p.letzterRaum
 }
 
 //################ Tests ######################
@@ -274,18 +267,18 @@ assert tuerIstGeschlossenBisBewohnerSieOeffnet { //evt was mit unitl ausprobiere
 
 }
 
-check personNurInEinemOrt for 4
-check geschlosseneTuerIstLeer for 4 // Bruahct man das, wenn es bereits als axiom definiert ist?
-check bewegungDurchOffeneTuer for 4
-check keineTeleportation_GROB for 4
-check keineTeleportation_FEIN for 4
-check personIstNieInTuer_GROB for 4
-check gleichesErgebnisInFreinUndGrob for 4
-check verfeinerungGrobUndFein for 4
-check nurBewohnerKannTuerOeffnen for 6
-check raumStrukturBleibtGleich for 4
-check tuerStrukturBleibtGleich for 4
-check alleTuerenSindImmerOffen for 4
+check personNurInEinemOrt for 5
+check geschlosseneTuerIstLeer for 5 // Bruahct man das, wenn es bereits als axiom definiert ist?
+check bewegungDurchOffeneTuer for 5
+check keineTeleportation_GROB for 5
+check keineTeleportation_FEIN for 5
+check personIstNieInTuer_GROB for 5
+check gleichesErgebnisInFreinUndGrob for 5
+check verfeinerungGrobUndFein for 5
+check nurBewohnerKannTuerOeffnen for 5
+check raumStrukturBleibtGleich for 5
+check tuerStrukturBleibtGleich for 5
+check alleTuerenSindImmerOffen for 5
 
 // ToDo : Checken, warum kein newConfic möglich ist ; Türen gehen manchmal automatisch wieder auf ohne autentifizierung ; PersonenGrob können noch in den Türen Spawnen
 
