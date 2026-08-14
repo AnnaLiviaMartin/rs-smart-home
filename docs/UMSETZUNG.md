@@ -28,6 +28,8 @@ Mit Alloy werden insbesondere folgende Eigenschaften untersucht:
 - Geschlossene Türen können nicht ohne Authentifizierung passiert werden.
 - Ereignisse verletzen keine Systemgarantien.
 
+Ziel dieses Kapitels ist es, untercshiedliche Verfeinerungsschritte des Alloy-Modells zu betrachten.
+
 ## Event-B
 ### Umsetzung des Groben Modells
 
