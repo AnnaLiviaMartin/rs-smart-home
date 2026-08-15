@@ -612,7 +612,7 @@ theorem moveGrob_belegung_von {orte : Finset Ort} (p : Person) (von nach : RaumS
     personenImOrt,
     hVonNachOrt
   ]
-
+  
 -- Nach Bewegung enthaelt Zielort vorherige Personen + p
 theorem moveGrob_belegung_nach {orte : Finset Ort} (p : Person) (von nach : RaumSet orte) (b : Belegung_safe orte) :
   von ≠ nach → personenImOrt (verschiebePerson p (raumAlsOrt von) (raumAlsOrt nach) b) (raumAlsOrt nach) = insert p (personenImOrt b (raumAlsOrt nach)) := by
@@ -1611,6 +1611,49 @@ def myBipartiteGraph : BipartiteOrtGraph meineOrte where
         | (revert hTuer; simp [istTuer]; done)
         | exact absurd (hAdj : myAdjRelBool _ _ = true) (by decide)
         | rfl
+        | (exfalso; revert hAdj; simp [myAdjRelBool, OrteSindBenachbart, myEdges])
+
+-- Initialer Zustand als Beispiel für meineOrte
+def person1 : Person := Person.Bewohner 1
+
+def meinePersonen : Finset Person := {person1}
+
+def initialBelegung : Belegung_safe meineOrte :=
+  ∅ |> Finmap.insert ⟨room1, by simp [meineOrte]⟩ ({person1} : Finset Person)
+
+def initialOffen : OrtSet meineOrte → Bool :=
+  fun _ => false
+
+def initialLetzterRaum : Person → Option Raum :=
+  fun _ => none
+
+def initialZustand : Zustand meineOrte meinePersonen where
+  belegungGrob := initialBelegung
+  belegungFein := initialBelegung
+  offen := initialOffen
+  letzterRaum := initialLetzterRaum
+
+  grob_einePersonGenauEinOrt := by
+    rintro ⟨p, hp⟩
+    simp [meinePersonen] at hp
+    subst p
+    native_decide +revert
+
+  fein_einePersonGenauEinOrt := by
+    rintro ⟨p, hp⟩
+    simp [meinePersonen] at hp
+    subst p
+    native_decide +revert
+
+  tuerOffenWennPersonEnthalten := by
+    rintro ⟨o, ho⟩
+    cases o with
+    | Raum r =>
+        trivial
+    | Tuer t =>
+        intro hBelegt
+        simp [initialBelegung] at hBelegt
+=======
         | sorry -- fertig machen
 
 /-!
