@@ -257,6 +257,10 @@ Personen zu.
 -/
 abbrev Belegung_safe (Orte : Finset Ort) := Finmap (fun _ : (OrtSet Orte) => Finset Person) -- arbeitet nur mit den erlaubten Orten aus Orte
 
+/-- Liest die Menge der Personen, die sich laut Belegung `b` am Ort `o` befinden. -/
+def personenImOrt {orte : Finset Ort} (b : Belegung_safe orte) (o : OrtSet orte) : Finset Person :=
+  (b.lookup o).getD ∅
+
 /-- Jede Person aus `personen` befindet sich in der Belegung `b` an genau einem Ort. -/
 def einePersonGenauEinOrt {orte : Finset Ort} {personen : Finset Person} (b : Belegung_safe orte) : Prop :=
   ∀ p : PersonSet personen, (Finset.univ.filter (fun o => p.val ∈ (b.lookup o).getD ∅)).card = 1
