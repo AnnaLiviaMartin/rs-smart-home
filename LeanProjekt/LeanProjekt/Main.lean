@@ -8,7 +8,7 @@ import Mathlib.Tactic.FinCases
 /-
   TODO:
 
-  Was insgesamt bewiesen wird: kommentare schreiben, aufräumen, schreibweise umändern von \and in ->, ungenutzte Methoden löschen, Feedback der KI einarbeiten
+  Was insgesamt bewiesen wird: kommentare schreiben, aufräumen, ungenutzte Methoden löschen
 
   Statische Struktur
   Räume und Türen sind disjunkt.
@@ -135,7 +135,7 @@ abbrev PersonSet (Personen : Finset Person) := { p : Person // p ∈ Personen }
 
 abbrev Belegung_safe (Orte : Finset Ort) := Finmap (fun _ : (OrtSet Orte) => Finset Person) -- arbeitet nur mit den erlaubten Orten aus Orte
 
---abbrev Belegung (orte : Finset Ort) (personen : Finset Person) := OrtSet orte → PersonSet personen
+--abbrev Belegung (orte : Finset Ort) (personenPersonenSet) := OrtSet orte → PersonSet personen
 
 abbrev Kante := Finmap (fun _ : Ort => Finset Ort) -- Graph-Kante fuer Ort: [Ort, Menge an Orten]
 
@@ -184,10 +184,6 @@ instance (u v : Ort) : Decidable (KanteIsBipartite u v) :=
 def adjIsBipartite {Orte : Finset Ort} (adj : (OrtSet Orte) → (OrtSet Orte) → Prop) :=
   ∀ (u v : OrtSet Orte), adj u v → KanteIsBipartite u v
 
--- Gebaeudeplan, der bipartite ist
-structure BipartitePlaceGraph (orte : Finset Ort) extends GebaeudePlan orte where
-  bipartite : adjIsBipartite Adj -- das ist das "geerbte" Adj aus der Def. von SimpeGraph
-
 def gartenHatGenauEineTuer {orte : Finset Ort} (G : GebaeudePlan orte) : Prop :=
   ∀ g : OrtSet orte,
     istGarten g.1 →
@@ -217,6 +213,7 @@ def gartenHatGenauEineTuer {orte : Finset Ort} (G : GebaeudePlan orte) : Prop :=
 
   Tueren verbinden jeweils zwei Raeume. Raeume koennen nicht mit anderen Raeumen direkt verbunden sein.
 -/
+-- Gebaeudeplan, der bipartite ist
 structure BipartiteOrtGraph (orte : Finset Ort) extends GebaeudePlan orte where -- statisch
   bipartite : adjIsBipartite Adj -- das ist das "geerbte" Adj aus der Def. von SimpeGraph
   --genauEinGarten (orte : Finset Ort) := ∃! g : Ort, g = Ort.Raum Raum.Garten ∧ g ∈ orte
@@ -230,17 +227,11 @@ structure BipartiteOrtGraph (orte : Finset Ort) extends GebaeudePlan orte where 
 def personenImOrt {orte : Finset Ort} (b : Belegung_safe orte) (o : OrtSet orte) : Finset Person :=
   (b.lookup o).getD ∅
 
-def istBelegt {orte : Finset Ort} (b : Belegung_safe orte) (p : Person) (o : OrtSet orte) : Prop :=
-  p ∈ personenImOrt b o
-
 /-
   Objekte, die sich veraendern koennen: Zustand ist die momentane Auspraegung
 -/
 def einePersonGenauEinOrt {orte : Finset Ort} {personen : Finset Person} (b : Belegung_safe orte) : Prop :=
   ∀ p : PersonSet personen, (Finset.univ.filter (fun o => p.val ∈ (b.lookup o).getD ∅)).card = 1
-
-def belegtePersonen {orte : Finset Ort} (b : Belegung_safe orte) (o : OrtSet orte) : Finset Person :=
-  (b.lookup o).getD ∅
 
 def tuerOffenWennPerson {orte} (belegungFein : Belegung_safe orte) (offen : TuerSet orte → Bool) : Prop :=
   ∀ o : TuerSet orte, (belegungFein.lookup (tuerAlsOrt o)).getD ∅ ≠ ∅ → offen o = true
