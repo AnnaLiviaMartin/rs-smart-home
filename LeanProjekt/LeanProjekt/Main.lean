@@ -612,7 +612,7 @@ theorem moveGrob_belegung_von {orte : Finset Ort} (p : Person) (von nach : RaumS
     personenImOrt,
     hVonNachOrt
   ]
-  
+
 -- Nach Bewegung enthaelt Zielort vorherige Personen + p
 theorem moveGrob_belegung_nach {orte : Finset Ort} (p : Person) (von nach : RaumSet orte) (b : Belegung_safe orte) :
   von ≠ nach → personenImOrt (verschiebePerson p (raumAlsOrt von) (raumAlsOrt nach) b) (raumAlsOrt nach) = insert p (personenImOrt b (raumAlsOrt nach)) := by
@@ -1621,7 +1621,7 @@ def meinePersonen : Finset Person := {person1}
 def initialBelegung : Belegung_safe meineOrte :=
   ∅ |> Finmap.insert ⟨room1, by simp [meineOrte]⟩ ({person1} : Finset Person)
 
-def initialOffen : OrtSet meineOrte → Bool :=
+def initialOffen : TuerSet meineOrte → Bool :=
   fun _ => false
 
 def initialLetzterRaum : Person → Option Raum :=
@@ -1647,14 +1647,17 @@ def initialZustand : Zustand meineOrte meinePersonen where
 
   tuerOffenWennPersonEnthalten := by
     rintro ⟨o, ho⟩
-    cases o with
-    | Raum r =>
-        trivial
-    | Tuer t =>
-        intro hBelegt
-        simp [initialBelegung] at hBelegt
-=======
-        | sorry -- fertig machen
+    sorry
+
+  verfeinerung := by sorry
+
+  tuerVerfeinerung := by sorry
+
+  grobeTuerenSindImmerLeer := by sorry
+
+  grobNurBekanntePersonen := by sorry
+
+  feinNurBekanntePersonen := by sorry
 
 /-!
 ## 13. Offene Beweise und TODOs
