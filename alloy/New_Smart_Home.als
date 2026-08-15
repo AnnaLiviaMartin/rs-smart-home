@@ -40,12 +40,6 @@ fact genauEinenGarten {
 	#GARTEN = 1
 }
 
-// warum auskommentiert? -> kommentar bitte
-//fact tuerEnthaltenKeinePersonenGrob {
-   // always all t: TUER |
-      //  no t.personenImOrtGrob
-//}
-
 fact alleRaumeInEinemGebaeude {
 	all r: RAUM | r in GARTEN.^nachbarn
 }
@@ -85,9 +79,6 @@ pred init {
 //#################### Zustandsübergänge / Ereignisse des Groben Modells
 
 pred schrittGrob[p: PERSON, von, nach: RAUM]{
-	//pre
-	some t: TUER | t in von.nachbarn and t in nach.nachbarn and t.offen in True
-//	p in von.personenImOrtGrob
 
 	//post
 	von.personenImOrtGrob' = von.personenImOrtGrob - p
@@ -144,9 +135,7 @@ pred schrittFein {
 
 pred schrittSehrFein {
 	some p: PERSON, t: TUER |
-		(oeffneTuer[p, t] and StutterSchritt_1[t]) or (schrittFein and tuerBleibtOffenOderFaelltZu) //frameconsition mit in die Klammer, weil sich das mit oeffneTuer beißt
-// stutter hier habe ich gebraucht, weil Personen wieder Random spawnen konnten -- Kommentar später entfernen
-	
+		(oeffneTuer[p, t] and StutterSchritt_1[t]) or (schrittFein and tuerBleibtOffenOderFaelltZu)	
 }
 
 pred oeffneTuer [p: PERSON, tuer: TUER] {
@@ -157,21 +146,18 @@ pred oeffneTuer [p: PERSON, tuer: TUER] {
 
 	//post
 	tuer.offen' = True
-
-	//frame in Stutter_Schritt_1 ausgelagert
 }
 
 pred tuerBleibtOffenOderFaelltZu {
-	all t: TUER | t.offen = False implies t.offen' = False //da ich nicht definiert habe, dass eine Tür von true auf false springen kann, ist die Lücke offen geblieben, damit die Tür sich schließen kann, sofern sie offen ist.
+	all t: TUER | t.offen = False implies t.offen' = False 
 }
 
-pred show {
+fact show {
 	init
 	always schrittSehrFein 
-//	or stutter //Stuttervorgänge werden stand jetzt im feinen Modell nicht ausgeführt, Das Modell ist also gezwungen, bei jedem Schritt eine Person im feinen Modell zu bewegen. 
 }
 
-run show for exactly 2 PERSON, 1 GAST, 1 BEWOHNER, exactly 1 GARTEN, exactly 3 TUER, exactly 4 RAUM
+//run show for exactly 2 PERSON, 1 GAST, 1 BEWOHNER, exactly 1 GARTEN, exactly 3 TUER, exactly 4 RAUM
 // bitte nur ein run show von beidem oder erklären warum beide nötig sind
 //run show
 
@@ -215,12 +201,16 @@ assert keineTeleportation_GROB {
 assert keineTeleportation_FEIN {
 	always all p: PERSON, von, nach: ORT | 
 		(p in von.personenImOrtFein and p in nach.personenImOrtFein' implies (nach in von.nachbarn)) or
-		(p in von.personenImOrtFein and p in von.personenImOrtFein') //stutter
+		(p in von.personenImOrtFein and p in von.personenImOrtFein')
 }
 
 assert personIstNieInTuer_GROB {
 	always all p: PERSON, t: TUER |
 	(p not in t.personenImOrtGrob)
+}
+
+assert personenImGrobmodellNurInRaeumen{
+	always all t: TUER | no t.personenImOrtGrob
 }
 
 assert gleichesErgebnisInFreinUndGrob{
@@ -237,7 +227,7 @@ assert verfeinerungKorrekt { // eventuell entfernen wenn andere assert funktioni
 		implies (p in r1.personenImOrtGrob' and p in r2.personenImOrtGrob')
 }
 
-assert verfeinerungGrobUndFein { // Personen können noch in den Türen Spawnen
+assert verfeinerungGrobUndFein {
 	always all p: PERSON, r: RAUM |
 		p in r.personenImOrtFein implies p in r.personenImOrtGrob
 }
@@ -271,6 +261,7 @@ check personNurInEinemOrt for 5
 check geschlosseneTuerIstLeer for 5 // Bruahct man das, wenn es bereits als axiom definiert ist?
 check bewegungDurchOffeneTuer for 5
 check keineTeleportation_GROB for 5
+check personenImGrobmodellNurInRaeumen for 5
 check keineTeleportation_FEIN for 5
 check personIstNieInTuer_GROB for 5
 check gleichesErgebnisInFreinUndGrob for 5
