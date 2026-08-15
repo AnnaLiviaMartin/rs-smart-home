@@ -5,7 +5,7 @@ Dieses Dokument beschreibt die konkreten Modellierungs- und Implementierungsents
 Die fachlichen Anforderungen sind in der [Modellspezifikation](./Modellspezifikation.md) beschrieben. Dieses Dokument erklärt, wie diese Anforderungen in Alloy und Lean als Modell umgesetzt und bewiesen wurden.
 
 ## Ziel der Umsetzung
-
+<!-- Habe ich nicht mit in die IDEE übernommen -->
 Ziel der Umsetzung ist es, die drei fachlichen Modelle formal abzubilden:
 
 1. das grobe Modell mit direkten Bewegungen zwischen Räumen,
@@ -17,7 +17,7 @@ Alloy wird verwendet, um mögliche Zustände und Abläufe automatisch zu untersu
 ## Verwendete Werkzeuge
 
 ### Alloy
-
+<!-- Habe ich nicht mit in die IDEE übernommen -->
 Alloy wird für die automatische Zustands- und Ablaufanalyse verwendet.
 
 Mit Alloy werden insbesondere folgende Eigenschaften untersucht:
