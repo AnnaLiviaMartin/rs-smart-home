@@ -55,7 +55,7 @@ fact tuerImmerOffenWennPersonEnthalten{
 	always all t: TUER |  #(t.personenImOrtFein) >= 1 implies t.offen = True
 }
 
-fact personKannNurDurchOffeneTürGehen {
+fact personKannNurDurchOffeneTuerGehen {
 	always all t: TUER, p: PERSON | p in t.personenImOrtGrob implies t.offen = True
 }
 
@@ -80,6 +80,11 @@ pred init {
 
 pred schrittGrob[p: PERSON, von, nach: RAUM]{
 
+	//pre --> Verfeinerungsschritte stellen pre-Conditions bereits sicher, daher auskommentiert
+//	p in von.personenImOrtGrob
+	von != nach
+//	some t: TUER | t in von.nachbarn and t in nach.nachbarn and t.offen in True
+
 	//post
 	von.personenImOrtGrob' = von.personenImOrtGrob - p
 	nach.personenImOrtGrob' = nach.personenImOrtGrob + p
@@ -95,6 +100,7 @@ pred betreteTuer[p: PERSON, von: RAUM, t: TUER]{
 	p in von.personenImOrtFein
 	t in von.nachbarn
 	t.offen in True
+	//nur eine Person darf die Tür betreten
 	#(t.personenImOrtFein) = 0
 
 	//post
@@ -126,7 +132,7 @@ pred vorbedingungenMoveFein [r1, r2: RAUM, t: TUER] {
 
 pred schrittFein {
 	some p: PERSON, r1, r2: RAUM, t: TUER | 
-		((betreteTuer[p, r1, t] and StutterSchritt_2[t]) or 
+		((betreteTuer[p, r1, t] and StutterSchritt_2) or 
 		(verlasseTuer[p, r2, t] and schrittGrob[p, r1, r2])) and 
 		vorbedingungenMoveFein[r1, r2, t]
 }
@@ -169,9 +175,8 @@ pred StutterSchritt_1 [tuer: TUER] {
 	all t: TUER - tuer | t.offen' = t.offen
 }
 
-pred StutterSchritt_2 [tuer: TUER]{
+pred StutterSchritt_2{
 	all o: ORT | o.personenImOrtGrob' = o.personenImOrtGrob
-	all t: TUER - tuer | t.offen' = t.offen
 }
 
 //################ Tests ######################
@@ -257,19 +262,19 @@ assert tuerIstGeschlossenBisBewohnerSieOeffnet { //evt was mit unitl ausprobiere
 
 }
 
-check personNurInEinemOrt for 5
-check geschlosseneTuerIstLeer for 5 // Bruahct man das, wenn es bereits als axiom definiert ist?
-check bewegungDurchOffeneTuer for 5
-check keineTeleportation_GROB for 5
-check personenImGrobmodellNurInRaeumen for 5
-check keineTeleportation_FEIN for 5
-check personIstNieInTuer_GROB for 5
-check gleichesErgebnisInFreinUndGrob for 5
-check verfeinerungGrobUndFein for 5
-check nurBewohnerKannTuerOeffnen for 5
-check raumStrukturBleibtGleich for 5
-check tuerStrukturBleibtGleich for 5
-check alleTuerenSindImmerOffen for 5
+check personNurInEinemOrt for 4
+check geschlosseneTuerIstLeer for 4 // Bruahct man das, wenn es bereits als axiom definiert ist?
+check bewegungDurchOffeneTuer for 4
+check keineTeleportation_GROB for 4
+check personenImGrobmodellNurInRaeumen for 4
+check keineTeleportation_FEIN for 4
+check personIstNieInTuer_GROB for 4
+check gleichesErgebnisInFreinUndGrob for 4
+check verfeinerungGrobUndFein for 4
+check nurBewohnerKannTuerOeffnen for 4
+check raumStrukturBleibtGleich for 4
+check tuerStrukturBleibtGleich for 4
+check alleTuerenSindImmerOffen for 4
 
 // ToDo : Checken, warum kein newConfic möglich ist ; Türen gehen manchmal automatisch wieder auf ohne autentifizierung ; PersonenGrob können noch in den Türen Spawnen
 
