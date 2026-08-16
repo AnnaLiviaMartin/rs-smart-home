@@ -503,14 +503,20 @@ def myBipartiteGraph : BipartiteOrtGraph meineOrte where
         | rfl
         | (exfalso; revert hAdj; simp [myAdjRelBool, OrteSindBenachbart, myEdges])
 
--- Initialer Zustand als Beispiel für meineOrte
+-- Initialer Zustand mit drei Personen
 
 def person1 : Person := Person.Bewohner 1
+def person2 : Person := Person.Bewohner 2
+def person3 : Person := Person.Gast 1
 
-def meinePersonen : Finset Person := {person1}
+def meinePersonen : Finset Person :=
+  {person1, person2, person3}
 
 def initialBelegung : Belegung_safe meineOrte :=
-  ∅ |> Finmap.insert ⟨room1, by simp [meineOrte]⟩ ({person1} : Finset Person)
+  ∅
+  |> Finmap.insert ⟨room1, by simp [meineOrte]⟩ ({person1} : Finset Person)
+  |> Finmap.insert ⟨room2, by simp [meineOrte]⟩ ({person2} : Finset Person)
+  |> Finmap.insert ⟨room3, by simp [meineOrte]⟩ ({person3} : Finset Person)
 
 def initialOffen : OrtSet meineOrte → Bool :=
   fun _ => false
@@ -527,14 +533,18 @@ def initialZustand : Zustand meineOrte meinePersonen where
   grob_einePersonGenauEinOrt := by
     rintro ⟨p, hp⟩
     simp [meinePersonen] at hp
-    subst p
-    native_decide +revert
+    rcases hp with rfl | rfl | rfl
+    · native_decide +revert
+    · native_decide +revert
+    · native_decide +revert
 
   fein_einePersonGenauEinOrt := by
     rintro ⟨p, hp⟩
     simp [meinePersonen] at hp
-    subst p
-    native_decide +revert
+    rcases hp with rfl | rfl | rfl
+    · native_decide +revert
+    · native_decide +revert
+    · native_decide +revert
 
   tuerOffenWennPersonEnthalten := by
     rintro ⟨o, ho⟩
