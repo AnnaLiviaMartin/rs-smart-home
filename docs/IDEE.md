@@ -1,10 +1,10 @@
-## Einleitung und Ziel der Arbeit
+# Einleitung und Ziel der Arbeit
 
 In dieser Arbeit wird ein Zugangskontrollsystem modelliert, in dem sich Personen zwischen verschiedenen Räumen bewegen können. Der Zugang zu einzelnen Räumen erfolgt über geöffnete Türen.
 
 Mithilfe von Alloy werden mögliche Systemzustände und Abläufe über Verfeinerungsschritte untersucht. Lean wird verwendet, um ausgewählte Eigenschaften mathematisch beziehungsweise formal zu beweisen.
 
-## Einführung und Ziel
+# Einführung und Ziel
 
 Ein Zugangskontrollsystem regelt, welche Personen die Türen zu bestimmten Räumen öffnen dürfen, der den Raumwechsel möglich macht.
 
@@ -47,19 +47,19 @@ Die Räume werden über Türen miteinander verbunden. Eine Tür verbindet dabei 
 
 Bernd arbeitet in der Hochschule Rhein-Main. Das Gebäude D, in welchem er arbeitet, besteht aus einem Garten und mehreren Räumen, die er betreten kann, wenn sie durch eine Tür miteinander verbunden sind. <!-- Einige der Räume sind für alle betretbar, wie beispielsweise die Flure und die Vorlesungsräume. -->
 
-Zu Beginn befinden sich Bernd und Sandmännchen im Garten:
+Zu Beginn befinden sich Bernd und Sandmännchen im Garten und folgende Grundannahmen werden getroffen:
 
-- Bernd ist "Bewohner" des Hauses.
+- Bernd ist "Bewohner" des Hauses, da er im Gebäude D arbeitet.
 - Sandmännchen ist ein Gast.
 - Beide Personen befinden sich im Garten.
 - Alle Türen sind geschlossen.
-- Sandmännchen besitzt keine Berechtigung, eine Tür zu öffnen.
+- Sandmännchen besitzt keine Berechtigung, eine Tür zu öffnen, da es nur ein Gast ist.
 
 Die Bewegungen innerhalb des Gebäudes D von Bernd und Sandmännchen lassen sich nun in unterschiedlichen Detailebenen betrachten.
 
 ## Unterschiedliche Betrachtungsebenen des Besuchs
 
-Für die spätere Modellierung in Alloy ist es nun sinnvoll, mit einer groben Spezifikation der Anforderungen an das System zu beginnen, um in weiteren Verfeinerungsschritten neue Anforderungen zu finden, und diese als jeweils nächsten Verfeinerungsschritt einzubinden. Wir verfolgen mit diesen Spezifikaitonsschritten den Event-B-Ansatz.
+Für die spätere Modellierung in Alloy ist es nun sinnvoll, mit einer groben Spezifikation der Anforderungen an das System zu beginnen, um in weiteren Verfeinerungsschritten neue Anforderungen zu finden, und diese als jeweils nächsten Verfeinerungsschritt einzubinden. Wir verfolgen mit diesen Spezifikaitonsschritten dem Event-B-Ansatz.
 
 Es gibt nun entsprechend unterschiedliche Betrachtungsebenen, auf denen unterschiedlich viele Informationen vom Besuch von Sandmännchen sichtbar sind. Wir unterscheiden zwischen drei Stufen, welche nachfolgend anhand des Besuchs von Sandmännchen spezifiziert werden. Jede tieferliegende Stufe stellt dabei eine Black-Box für die jeweils darüberliegenden dar.
 
@@ -71,7 +71,7 @@ Es gibt nun entsprechend unterschiedliche Betrachtungsebenen, auf denen untersch
 
 ![Hausplan_zweites_Modell](./pictures/smart-home-Hausplan_zwei.png)
 
-3. Türen in der Hochschule sind allerdings nicht immer offen. Es muss also ebenfalls einen Mechanismus geben, um geschlossene Türen öffnen zu können. Möchte Bernd nun sein Büro seinem Gast Sandmännchen zeigen und es ist gerade verschlossen, muss er zunächst mit seinem Transponder das Büro, und damit die Tür, aufschließen. Ist die Tür dann offen, kann er das Büro betreten. Hält Bernd die Tür für das Sandmännchen offen, damit diese nicht zufällt, kann auch das Sandmännchen den Raum betreten. Anschließend kann die Tür aber nach einer beliebigen Zeit wieder zufallen. Geschlossene Türen können dabei nur von Personen geöffnet werden, die in der HS arbeiten sind und daher einen Transponder haben.
+3. Türen in der Hochschule sind allerdings nicht immer offen. Es muss also ebenfalls einen Mechanismus geben, um geschlossene Türen öffnen zu können. Möchte Bernd nun sein Büro seinem Gast Sandmännchen zeigen und es ist gerade verschlossen, muss er zunächst mit seinem Transponder das Büro, und damit die Tür, aufschließen. Ist die Tür dann offen, kann er das Büro betreten. Hält Bernd die Tür für das Sandmännchen offen, damit diese nicht zufällt, kann auch das Sandmännchen den Raum betreten. Anschließend kann die Tür aber nach einer beliebigen Zeit wieder zufallen. Geschlossene Türen können dabei nur von Personen geöffnet werden, die in der Hochschule arbeiten und daher einen Transponder haben.
 
 ![Hausplan_drittes_Modell](./pictures/smart-home-Hausplan_drei.png)
 
@@ -89,9 +89,9 @@ Das Zugangskontrollsystem, wie oben beschrieben, hat auf allgemeiner Ebene versc
 | Bewohner:in | Eine Person mit Berechtigung zum Türenöffnen |
 | Gast | Eine Person ohne Berechtigung zum Türenöffnen |
 | Raum | Ein Ort, in dem sich Personen aufhalten können |
-| Garten | Ein Ort, außerhalb des Gebäudes |
-| Tür | Verbindet zwei Räume |
-| Authentifizierung | Technische Einrichtung zur Identitäts- oder Berechtigungsprüfung |
+| Garten | Ein Ort, außerhalb des Gebäudes, in dem sich Personen aufhalten können |
+| Tür | Verbindet zwei Räume miteinander |
+| Authentifizierung | Technische Einrichtung zur Identitäts- oder Berechtigungsprüfung, führt zur Öffnung einer Tür |
 
 ### Grundregeln
 
@@ -103,12 +103,13 @@ Darüber hinaus gibt es bestimmte Regeln, die in der Realität immer gelten. Die
 - Eine Person darf eine Tür nur bei geöffneter Tür passieren.
 <!-- - Der Bewegungszustand darf keine Teleportation ermöglichen. -->
 
-Sollten diese Bedingungen verletzt werden, sind wohl weder Bernd noch Sandmännchen sicher und befinden sich in akuter Diese-welt-existiert-so-nicht-gefahr. Wir schließen diese daher zur Wahrung eines realitätsnahen Ansatzes aus.
+Sollten diese Bedingungen verletzt werden, sind wohl weder Bernd noch Sandmännchen sicher und befinden sich in akuter Diese-Welt-existiert-so-nicht-Gefahr. Wir schließen diese daher zur Wahrung eines realitätsnahen Ansatzes aus.
 
 Über diese grundlegenden Gesetze hinaus, gibt es noch weitere definierte Axiome, die die Umsetzung des D Gebäude möglich machen:
 
 - alle Räume sind von allen Räumen aus erreichbar und befinden sich entsprechend im gleichen Gebäude
 - es gibt um das Gebäude herum einen einzigen Garten als Außenbereich
+- der Garten des Gebäudes kann nur durch eine Eingangs-/Außgangstür betreten bzw. verlassen werden
 - jeder Nachbarraum eines Raums ist wiederum Nachbar des Nachbarraums
 
 ### Abstraktes Datenmodell
@@ -176,13 +177,15 @@ Bereits aufgelistete Axiome wurden dabei in Alloy als facts definiert, damit die
 - Eine Tür kann geöffnet oder geschlossen sein.
 - Eine Person darf eine Tür nur bei geöffneter Tür passieren.
 
-Ebenfalls als facts wurden die Strukturen definiert, die die Struktur des Gebäudes ausmachen [Grundregeln]:
+Ebenfalls als facts wurden die Strukturen definiert, die die Struktur des Gebäudes ausmachen:
 
 - alle Räume sind von allen Räumen aus erreichbar und befinden sich entsprechend im gleichen Gebäude
 - es gibt um das Gebäude herum einen einzigen Garten als Außenbereich
 - jeder Nachbarraum eines Raums ist wiederum Nachbar des Nachbarraums
 
 ## Event-B
+
+Es folgt eine Erklärung zur Defintion der Event-B Modelle.
 
 ### Umsetzung des Groben Modells
 
@@ -234,7 +237,7 @@ Im zweiten Verfeinerungsschritt, wurde nun die Voraussetzung eingeführt, dass B
 
 Da sich nur Bewohner Authentifizieren können, ist es nun notwendig, Personen in Bewohner und Gäste aufzuteilen. Das Bewegen zwischen Räumen mit einer verschlossenen Tür wird für Gäste also erst möglich, wenn ein Bewohner die Tür vorher aufgeschlossen hat.
 
-Für eine bessere Visualisierung wurde ich nachfolgenden Grafiken ein Authentifizierungsobjekt eingeführt, dieses ist in Alloy allerdings nicht explizit vorhanden, die Autorisierung findet hier direkt über die Tür statt. 
+Für eine bessere Visualisierung wurde in nachfolgenden Grafiken ein Authentifizierungsobjekt eingeführt, dieses ist in Alloy allerdings nicht explizit vorhanden, die Autorisierung findet hier direkt über die Tür statt. 
 
 ![Modell mit Authentifizierung der zweiten Verfeinerung](pictures/Alloy_Raumplan_Authentifizierung.svg)
 
@@ -262,7 +265,7 @@ Da das Modell immer nur Schritte einzelner Personen ausführt und auch beim Tür
 ## Zusammengefasste Ablaufschritte der zweiten Verfeinerung
 
 **Aktivitätsdiagramm**
--->
+
 ```plantuml
 @startuml
 title Authentifizierung und Bewegung durch eine Tür
@@ -297,9 +300,43 @@ stop
 
 ```
 
-## Beweisen mit Lean
+# Beweisen mit Lean
 
-## Fazit und Ausblick
+Lean wird für mathematische Beweise verwendet.
+
+In Lean werden insbesondere folgende Eigenschaften betrachtet:
+
+- Die Invarianten bleiben nach einer Bewegung erhalten.
+- Eine Person befindet sich nach einer Bewegung weiterhin genau an einem Ort.
+- Eine Tür verbindet weiterhin genau zwei Räume.
+- Eine fehlgeschlagene Authentifizierung verändert den Zustand nicht.
+- Die Verfeinerung liefert dasselbe fachliche Ergebnis wie das grobe Modell.
+
+## Lean-Modelle
+
+Dieses Kapitel beschreibt, wie Lean verwendet wird.
+
+### Abbildung der Objekte aus Alloy nach Lean
+
+### Definition von Zuständen
+
+### Definition von Übergängen
+
+### Formulierung der Invarianten
+
+### Beweis ausgewählter Eigenschaften
+
+# Vergleich von Alloy und Lean
+
+| Alloy | Lean |
+| :--- | :--- |
+| Suche nach Gegenbeispielen | Konstruktion formaler Beweise |
+| Zustände und Relationen | Typen, Funktionen und Sätze |
+| `check` | `theorem` beziehungsweise `lemma` |
+| begrenzter Suchraum | grundsätzlich allgemeiner Beweis |
+| Modellprüfung | interaktives beziehungsweise automatisiertes Beweisen |
+
+# Fazit und Ausblick
 
 <!-- Erscheint mir mehr wie eine Zusammenfassung und weniger als Fazit -->
 
