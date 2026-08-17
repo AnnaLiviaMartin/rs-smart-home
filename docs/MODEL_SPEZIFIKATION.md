@@ -89,19 +89,3 @@ Bewohner -> auth -> Tür -> Raum
 **Tür offen**
 Gast -> auth -> Tür -> Raum
 Bewohner -> auth -> Tür -> Raum
-
-# Verfeinerungsschritt 03
-
-Das dritte verfeinerte Modell ergänzt das Zugangssystem um einen Alarmzustand für Raum 17.
-
-## Objekte und Beziehungen
-
-- Es gibt einen speziell überwachten Raum 17.
-- Es gibt die Person Herrn Weitz.
-- Herr Weitz ist Bewohner.
-- Das System besitzt einen Alarmzustand.
-- Der Alarmzustand kann aktiviert oder deaktiviert sein.
-
-## Ereignis `aktiviereAlarm`
-
-Der Alarm wird aktiviert, wenn sich eine andere Person ohne Herr Weitz in Raum 17 befindet.
