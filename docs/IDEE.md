@@ -305,20 +305,16 @@ stop
 
 In dieser Arbeit wurde ein Zugangskontrollsystem modelliert, in dem sich Personen zwischen verschiedenen Räumen bewegen können. Dabei wurden Räume, Türen, Personen, Berechtigungen und Authentifizierungsgeräte berücksichtigt.
 
-Das System wurde schrittweise in drei Modellen beschrieben. Das erste Modell stellt eine Bewegung direkt zwischen zwei Räumen dar. Im zweiten Modell wird der Aufenthalt einer Person innerhalb der Tür als Zwischenzustand ergänzt. Das dritte Modell erweitert den Bewegungsablauf um die Authentifizierung und das Öffnen geschlossener Türen.
+Das System wurde insgesamt schrittweise in drei Modellen beschrieben, die jeweils aufeinander aufbauen. Aufbauend auf den Modellierungen, wie sie in Alloy vorliegen, konnten in Lean entsprechende Modelle und Vorgänge nachgebaut und bewiesen werden.
 
-Für die Modelle wurden verschiedene Systemgarantien festgelegt. Dazu gehören unter anderem die eindeutige Zuordnung einer Person zu einem Ort, die Verbindung von Türen mit genau zwei Räumen sowie die Bedingung, dass geschlossene Türen nicht ohne Berechtigung passiert werden können. Außerdem wurde beschrieben, welche Zustände sich durch die einzelnen Ereignisse verändern dürfen und welche Systemteile unverändert bleiben müssen.
+Das System wurde schrittweise in drei Modellen beschrieben. Mit dem Groben Modell haben wir den gewünschten Anfangs- und Endzustand modelliert. Die Ergebnisse der verfeinerten Modelle sollten denen des Groben Modells gleich sein.
 
-Die drei Modelle beschreiben denselben fachlichen Vorgang mit unterschiedlich hoher Detailgenauigkeit. Das grobe Modell abstrahiert den Aufenthalt in der Tür. Das zweite Modell macht diesen Zwischenzustand sichtbar. Das dritte Modell ergänzt zusätzlich die Authentifizierung. Nach Abschluss einer Bewegung müssen die Modelle dasselbe fachliche Ergebnis liefern, auch wenn der Ablauf im feineren Modell aus mehreren Einzelschritten besteht.
+In einem verfeinerten Schritt haben wir die Zwischenschritte in den Türen hinzugefügt. Diese bilden die Grundlage für die Authentifizierung, da Personen ohne Berechtigung in einem weiteren Schritt Türen nicht passieren dürfen. 
 
-Als Erweiterungen des Modells wären unter anderem folgende Punkte möglich:
+In dem Schritt der Authentifizierung wurde nun eine erste Bedingung hinzugefügt, dass Personen Bewohner sein müssen, damit sie Türen öffnen können. Diese Verfeinerung könnte einerseits durch weitere Bedingungen ausgebaut werden.
 
-- mehrere Gärten oder Außenbereiche,
-- unterschiedliche Berechtigungsstufen,
-- mehrere Authentifizierungsgeräte,
-- gleichzeitige Bewegungen mehrerer Personen,
-- Alarmzustände bei unberechtigtem Zutritt,
-- zusätzliche Raumtypen,
-- wenn eine Person die Tür über das Authentifizierungsgerät öffnet, könnte durch die offene Tür eine weitere Person den Raum betreten (dazu müssten gleichzeitige Bewegung von Personen möglich sein).
+Wenn man das System wiederum nach Event-B ausarbeiten möchte, könnte man den jetzigen Authentifizierungsschritt wiederum als Blackbox betrachten und in der Hinsicht das System um weitere Logik durch das Hinzufügen von Verfeinerungsschritten ergänzen.
 
-Damit bildet das Modell eine vereinfachte, aber erweiterbare Grundlage für die formale Beschreibung eines Zugangskontrollsystems.
+So könnte beispielsweise die Authentifizierung nicht nur überprüfen, ob es sich bei der Person um einen Bewohner handelt, sondern auch, dass eine maximale Kapazität des Raumes eingehalten wird. Es könnten aber auch andere Abhängigkeiten modelliert werden, beispielsweise dass Räume nur zu bestimmten Uhrzeiten betreten werden dürfen. Da es gerade bei der Authentifizierung sehr viele Möglichkeiten gibt, Raumzugänge zu regeln, wäre hier eine breite Komplexität in diesem Verfeinerungsschritt möglich. Dabei könnte eine Struktur zur Hinterlegung dieser Regeln entwickelt werden, beispielsweise könnte jeder Raum, je nach Raumtyp, eigene Regeln besitzen, die von einem Authentifizierungsgerät ausgelesen und auf jeweilige externe Gegebenheiten, beispielsweise Personentypen, Wetterbedingungen oder Uhrzeiten, angewendet werden können. Auch könnten mögliche parallele Authentifizierungen von Personen in gleichen Räumen modelliert werden und eventuelle Regelverletzungen der Authentifizierung in solchen Situationen erkannt, und entsprechende Spezifikationslücken geschlossen werden.
+
+Insgesamt bildet das Modell eine vereinfachte, aber erweiterbare Grundlage für die formale Beschreibung eines Zugangskontrollsystems.
