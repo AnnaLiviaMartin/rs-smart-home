@@ -50,10 +50,6 @@ fact tuerImmerOffenWennPersonEnthalten{
 	always all t: TUER |  #(t.personenImOrtFein) >= 1 implies t.offen = True
 }
 
-fact personKannNurDurchOffeneTuerGehen {
-	always all t: TUER, p: PERSON | p in t.personenImOrtGrob implies t.offen = True
-}
-
 fact alleNachbarnSindSymmetrisch {
 	all r: RAUM, t: TUER | r in t.nachbarn <=> t in r.nachbarn
 	all t:TUER, r: RAUM | t in r.nachbarn <=> r in t.nachbarn
