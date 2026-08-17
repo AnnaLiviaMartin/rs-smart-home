@@ -318,25 +318,39 @@ Teil der statischen Struktur sind damit alle Räume und Türen, da diese ihren S
 
 ### Umsetzung der statischen Struktur
 
-Die statische Struktur haben wir über das Lean-Interface SimpleGraph umgesetzt.
+Die statische Struktur haben wir über das Lean-Interface SimpleGraph umgesetzt. Ein SimpleGraph bringt Nachbarschaftssymmetrie und Schleifenfreiheit bereits als Bestandteil seiner Definition mit. Beides mussten wir dadurch nicht selbst als Eigenschaft unseres Gebäudeplans nachweisen, sondern haben es "geschenkt" bekommen, sobald wir unseren GebaeudePlan als SimpleGraph (OrtSet Orte) definiert haben. Ebenso kommen mit SimpleGraph bereits bewiesene Sätze einher, welche wir für die Beweise einsetzen konnten.
 
-- erklären warum bipartite
-- erklären warum extra eigenschaften darin bewiesen -> geht nicht über definition von einzelnen axiomen + so sicherstellen dass man nur echte objekte erstellen kann für beispiel
-- nutzung von Abkürzungen für gemeinsame Datentypen: OrtSet, TuerSet, RaumSet -> so später automatisch Typen festlegbar
-- durch solche definition wurden automatisch bereits einige dinge gegeben: Gebaeudeplan, der bipartite ist, nachbar-symmetrie gegeben, damit auch tuerVerbindetZweiRaeume, alleNachbarnSindSymmerisch inkl. Axiome; 
-- Invarianten, die bereits implizit definiert sind: Jede Tuer besitzt genau eine Authentifizierung. Durch Tuer.tuer (auth : Authentifizierung) bereits garantiert. offen besitzt genau einen Bool-Wert. Durch offen : OrtSet orte → Bool bereits garantiert. letzterRaum ist entweder ein Raum oder nicht gesetzt. Durch letzterRaum : Person → Option Raum bereits garantiert. Jede Person ist Bewohner:in oder Gast. Durch den induktiven Datentyp Person bereits garantiert. Raeume und Tueren sind getrennte Ort-Konstruktoren. Durch Ort.Raum und Ort.Tuer bereits garantiert. Die Nachbarschaftssymmetrie und die Schleifenfreiheit sind bei SimpleGraph ebenfalls bereits Bestandteile der Struktur. Tueren verbinden jeweils zwei Raeume. Raeume koennen nicht mit anderen Raeumen direkt verbunden sein.
-- Erklären warum das Beispiel Gebäude D nicht bipartite ist aber bei uns im Code das wichtig ist für Lean
+Für unser Modell reicht ein beliebiger SimpleGraph allerdings nicht aus, da er auch Kanten zwischen zwei Räumen oder zwei Türen zulassen würde. Fachlich soll ein Raumwechsel aber immer über eine Tür erfolgen, und eine Tür soll immer genau zwei Räume verbinden, niemals eine andere Tür. Wir haben diese Einschränkung daher als eigene Eigenschaft KanteIsBipartite formuliert, die für jede Kante verlangt, dass sie einen Raum mit einer Tür verbindet, und bündeln sie zusammen mit weiteren Grundeigenschaften in der Struktur BipartiteOrtGraph, die auf GebaeudePlan aufbaut. Damit ist ein Gebäudeplan im Sinne unseres Modells nicht irgendein Graph, sondern von vornherein ein Graph, der die fachliche Bedingung "Raum–Tür–Raum" erfüllt und gleichzeitig ein SimpleGraph ist.
+
+Auch die weiteren Eigenschaften von BipartiteOrtGraph, etwa dass es genau einen Garten gibt und dieser genau eine angrenzende Tür besitzt, haben wir nicht als freistehende axiom-Deklarationen formuliert, sondern als Felder der Struktur, die bei der Konstruktion eines konkreten Gebäudeplans tatsächlich erfüllt und damit bewiesen werden müssen. Ein axiom hätte Lean lediglich angewiesen, die jeweilige Aussage ungeprüft zu übernehmen. Uns war dagegen wichtig zu zeigen, dass unsere Definitionen nicht ins Leere laufen, sondern dass sich mit ihnen tatsächlich ein Gebäudeplan konstruieren lässt, der alle geforderten Eigenschaften erfüllt. Das zeigen wir an unserem Beispielgebäude (siehe [Beispiel.lean](/LeanProjekt/LeanProjekt/Beispiel.lean)), für das wir BipartiteOrtGraph explizit instanziieren und dabei jede der geforderten Eigenschaften beweisen.
+
+Für die wiederkehrenden Datentypen OrtSet, TuerSet, RaumSet und PersonSet haben wir jeweils Abkürzungen definiert, die ein Element zusammen mit dem Nachweis bündeln, dass es tatsächlich zur betrachteten Gebäudekonfiguration orte beziehungsweise Personenmenge personen gehört. Dadurch legt Lean an vielen Stellen bereits automatisch fest, mit welchen konkreten Objekten wir arbeiten dürfen, ohne dass wir die Zugehörigkeit jedes Mal von Hand mitführen müssten.
+
+Durch diese Definitionen ergeben sich bereits mehrere Eigenschaften implizit, ohne dass wir sie gesondert beweisen mussten:
+
+- Der Öffnungszustand einer Tür besitzt immer genau einen Wahrheitswert, da `offen : OrtSet orte → Bool` bereits als totale Funktion nach `Bool` definiert ist.
+- Der letzte Raum einer Person ist entweder ein Raum oder nicht gesetzt, da `letzterRaum : Person → Option Raum` bereits genau diese beiden Fälle abbildet.
+- Jede Person ist entweder Bewohner:in oder Gast, da dies durch den induktiven Datentyp `Person` mit seinen beiden Konstruktoren bereits erschöpfend festgelegt ist.
+- Räume und Türen sind stets unterscheidbare Orte, da `Ort.Raum` und `Ort.Tuer` getrennte Konstruktoren desselben induktiven Typs `Ort` sind.
+- Nachbarschaftssymmetrie und Schleifenfreiheit sind, wie oben beschrieben, bereits Bestandteil von `SimpleGraph`.
+
+Diese Eigenschaften mussten wir also nicht zusätzlich als eigene Sätze formulieren und beweisen, sondern sie folgen bereits aus der Art, wie wir die zugrunde liegenden Typen konstruiert haben. Das ist einer der Vorteile, ein Modell möglichst direkt über die Typstruktur statt über nachträgliche Zusatzbedingungen abzubilden: Ein falsch konstruiertes Objekt lässt sich in diesen Fällen in Lean gar nicht erst hinschreiben.
 
 ### Umsetzung der veränderlichen Struktur (Zuständen) 
 
-- mit Zustand struktur -> alternativ hättem man das ganze auch ohne Struktur Zustand machen können und dann nur über Listen statt dass die LIsten in einem übergeordneten Typen sind. So kann man aber mit der Struktur einfacher sicherstellen dass bestimmte Grundeigenschaften immer bestehen bleiben beim anlegen und keine inkorrekten Zustände anlegbar sind -> das verschiebt die legitimität der eigenschaften dann zur Veränderung. so muss nur noch beim verändern sichergestellt werden dass die zustände korrekt definiert bleiben
-- erklären warum extra eigenschaften darin bewiesen -> geht nicht über definition von einzelnen axiomen + so sicherstellen dass man nur echte objekte erstellen kann für beispiel
-- nutzung von Abkürzungen für gemeinsame Datentypen: OrtSet, TuerSet, RaumSet -> so später automatisch Typen festlegbar
-- Umsetzung: erklären warum wir in Lean Zustand verwendet haben/ warum wir nicht mit Zustand beweisen, Tür zufallen erklären warum und wie umgesetzt, erklären warum SimpleGraph verwendet
+Für die veränderlichen Anteile des Modells hätten wir prinzipiell auch ohne einen eigenen Zustand-Typ arbeiten können, indem wir Belegung, Öffnungszustand und letzten Raum als lose nebeneinanderstehende Listen beziehungsweise Funktionen durch die Beweise reichen. Wir haben uns stattdessen für eine gemeinsame Struktur Zustand entschieden, da sich damit an einer Stelle festlegen lässt, welche Grundeigenschaften ein Zustand immer erfüllen muss. Ein Zustand lässt sich in Lean gar nicht erst anlegen, wenn diese Eigenschaften nicht erfüllt sind, denn sie sind Teil der Struktur selbst und nicht nur nachträglich behauptete Aussagen über sie.
+
+Dadurch verschiebt sich die eigentliche Beweislast von der Konstruktion in die Veränderung: Statt bei jeder Verwendung eines Zustands erneut zeigen zu müssen, dass er sinnvoll ist, muss nur noch bei jedem Übergang gezeigt werden, dass der neue Zustand die Invarianten weiterhin erfüllt. Diese Invarianten haben wir bewusst nicht als freistehende axiom-Deklarationen formuliert, sondern als Felder der Struktur beziehungsweise als zu beweisende Eigenschaften über unserem Beispielgebäude (siehe Beispiel.lean). Ein axiom würde Lean lediglich mitteilen, die Aussage ungeprüft zu akzeptieren, für uns war hingegen wichtig, tatsächlich zu zeigen, dass sich mit unseren Definitionen überhaupt ein Zustand konstruieren lässt, der allen Anforderungen genügt, und nicht nur, dass wir uns die entsprechende Eigenschaft wünschen.
+
+Für die häufig wiederkehrenden Datentypen OrtSet, TuerSet, RaumSet und PersonSet haben wir jeweils Abkürzungen definiert, die einen Ort beziehungsweise eine Person zusammen mit dem Nachweis bündeln, dass dieses Element tatsächlich zur jeweils betrachteten Gebäudekonfiguration orte beziehungsweise Personenmenge personen gehört. Dadurch legt Lean die zulässigen Typen an vielen Stellen automatisch fest, ohne dass wir die Zugehörigkeit jedes Mal erneut von Hand mitführen müssen.
+
+Ein Grundproblem bei der Modellierung veränderlicher Daten in Lean ist, dass es keine Variablen im klassischen Sinn gibt: Ein Wert lässt sich nicht "an Ort und Stelle" verändern, jede Änderung erzeugt formal ein neues, unabhängiges Objekt. Hätten wir die Belegung eines Ortes direkt als Bestandteil des Gebäudegraphen modelliert, etwa als Eigenschaft der Knoten selbst, so hätte jede Bewegung einer einzigen Person einen vollständig neuen Graphen erzeugt, dessen statische Eigenschaften wir jedes Mal erneut hätten nachweisen müssen. Aus diesem Grund trennen wir strikt zwischen der statischen Struktur (dem GebaeudePlan beziehungsweise BipartiteOrtGraph, der über die gesamte Modellierung hinweg unverändert bleibt) und den veränderlichen Inhalten (Belegung_safe, offen, letzterRaum), die wir als eigene, vom Graphen unabhängige Abbildungen in Zustand führen. Eine Bewegung verändert damit ausschließlich diese Abbildungen und erzeugt einen neuen Zustand. Der zugrunde liegende Gebäudeplan bleibt über alle Schritte hinweg derselbe Wert und muss nicht erneut bewiesen werden.
+
+Der Öffnungszustand einer Tür wird in unserem Modell nur explizit durch das Ereignis oeffneTuer verändert, und zwar ausschließlich vom geschlossenen in den geöffneten Zustand. Das entspricht der fachlichen Anforderung aus der Spezifikation, dass eine Authentifizierung niemals Türen schließt, sondern nur öffnet. Das eigenständige Zufallen einer geöffneten Tür nach einer beliebigen Zeit haben wir hingegen nicht als eigenes Lean-Ereignis modelliert, sondern bewusst offengelassen: Die Spezifikation macht dazu selbst keine Aussage darüber, wann genau dies geschieht, sondern nur, dass es irgendwann geschieht. Ein solches "irgendwann" ist eine Lebendigkeits- und keine Sicherheitseigenschaft und hätte andere Beweistechniken erfordert als die von uns betrachteten pre-/post-/frame-Bedingungen einzelner Schritte.
 
 ## Beweise
 
-Nach der Definition der Objekte mit ihren Eigenschaften konnten wir dann Beweise schreiben. Die Beweise orientieren sich an den Definitionen von Alloy mit den pre-/post- und frame-Bedingungen. 
+Nach der Definition der Objekte mit ihren Eigenschaften konnten wir dann Beweise schreiben. Die Beweise orientieren sich an den Definitionen von Alloy mit den pre-/post- und frame-Bedingungen.
 
 Es gibt dabei zwei Abstaktionsebenen:
 1. Beweise direkt über die Listen
@@ -352,11 +366,33 @@ Diese Eigenschaften wurden dann über die zwei Abstraktionsebenen sichergestellt
 
 ### Definition von Übergängen
 
-- wie wir die einzelnen pre-post- etc. in eine methode zusammengepackt haben -> konsistenz sicherstellen
+Jeder Übergang ist nach demselben Schema aufgebaut: Eine Vorbedingung (`pre_...`) beschreibt, welche Voraussetzungen vor dem Schritt gelten müssen, eine Aktionsfunktion (`aktion_...`) berechnet die eigentliche Änderung, und eine Nachbedingung (`post_...`) beschreibt den resultierenden Zustand. Frame-Bedingungen (`frame_...`) legen fest, welche Anteile des Zustands von einem Schritt unberührt bleiben. Diese vier Bestandteile fassen wir jeweils in einer gemeinsamen `...Schritt`-Relation zusammen (zum Beispiel `moveGrobSchrittZustand`, `betreteTuerSchritt`, `verlasseTuerSchritt`, `oeffneTuerSchritt`), sodass ein einzelner Übergang zwischen zwei Zuständen `Z` und `Z'` immer über genau eine solche Relation beschrieben wird. Das entspricht in Aufbau und Zweck den `pred`-Definitionen in Alloy und stellt sicher, dass alle im Modell zugelassenen Änderungen an einer Stelle gebündelt sind, statt über verstreute Einzelaussagen nachgewiesen werden zu müssen.
 
 ### Formulierung der Invarianten und Axiome
 
-- erklären warum hier nicht axiom verwendet wird als schlüsselwort etc.
+Warum wir Grundeigenschaften grundsätzlich nicht als axiom, sondern als zu beweisende Felder formulieren, wurde bereits in den vorherigen Abschnitten begründet. Ergänzend dazu ist an dieser Stelle wichtig, wie die einzelnen Grundregeln aus der Spezifikation in Lean formuliert sind: Wir haben jede Regel als eigenständige, benannte Prop-Definition festgehalten (etwa `einePersonGenauEinOrt`, `tuerOffenWennPerson`, `relation_verfeinerung` oder `nurBekanntePersonen`), statt sie direkt und unbenannt in BipartiteOrtGraph beziehungsweise Zustand hineinzuschreiben. Dadurch lässt sich jede Regel einzeln referenzieren, unabhängig von der Struktur formulieren und in mehreren Beweisen wiederverwenden. Die Felder von BipartiteOrtGraph und Zustand binden diese Definitionen dann lediglich ein, anstatt die Bedingungen selbst zu enthalten. Das entspricht in der Struktur den benannten fact-Blöcken in Alloy und macht zugleich sichtbar, welche fachliche Regel aus der Spezifikation hinter welcher Invariante steht.
+
+### Zwei Abstraktionsebenen der Beweise
+
+Viele der Eigenschaften, die einen Bewegungsschritt betreffen, beweisen wir auf zwei unterschiedlichen Ebenen: einmal direkt über die Belegung (Belegung_safe), einmal über den vollständigen Zustand. Das ist keine unnötige Verdopplung, sondern eine bewusste Schichtung.
+
+Auf der Belegungsebene zeigen wir Eigenschaften wie zum Beispiel, dass eine Person nach einer groben Bewegung nicht mehr im Ausgangsraum steht:
+
+```lean
+theorem moveGrob_person_nicht_in_von (G : BipartiteOrtGraph orte) (offen : TuerSet orte → Bool) (p : Person) (von nach : RaumSet orte) (b : Belegung_safe orte) :
+  pre_moveGrobMitTuer G offen p von nach b → p ∉ personenImOrt (moveGrobBelegung p von nach b) von
+```
+
+Ein solcher Beweis betrachtet ausschließlich die Belegung: Die Person war vorher im Ausgangsraum, Ausgangs- und Zielraum sind verschieden, und nach der Aktion ist die Person dort nicht mehr enthalten. Weder der übrige Zustand noch `offen`, `letzterRaum` oder die restlichen Invarianten spielen dabei eine Rolle. Dadurch bleibt der Beweis einfach, unabhängig vom restlichen Modell wiederverwendbar und leicht auf ähnliche Aktionen übertragbar.
+
+Auf der Zustandsebene übertragen wir diese Eigenschaft dann auf einen vollständigen Übergang zwischen zwei Zuständen:
+
+```lean
+theorem moveGrobSchrittZustand_person_nicht_in_von (G : BipartiteOrtGraph orte) (p : Person) (von nach : RaumSet orte) (Z Z' : Zustand orte personen) :
+  moveGrobSchrittZustand G p von nach Z Z' → p ∉ personenImOrt Z'.belegungGrob von
+```
+
+Die beiden Ebenen beantworten unterschiedliche Fragen: Die Belegungsebene beschreibt, was eine Aktion mit einer Belegung macht, unabhängig davon, wie diese Belegung eingebettet ist. Die Zustandsebene beschreibt, wie sich diese Änderung in einen vollständigen, invariantenerhaltenden Systemschritt einfügt, und ist dafür notwendig, sobald Aussagen über offene Türen, den letzten Raum oder das Zusammenspiel von grober und feiner Belegung getroffen werden sollen. Eine reine Belegungsaussage würde für solche Fragen nicht ausreichen und eine reine Zustandsaussage würde umgekehrt für einfache Aussagen wie die obige unnötig viele, für die eigentliche Aussage irrelevante Zustandsfelder mitschleppen. Wir haben uns daher durchgehend dafür entschieden, zunächst die grundlegende Eigenschaft auf der jeweils einfachsten Ebene zu zeigen und sie anschließend in den vollständigen Zustandsübergang zu heben.
 
 ### Umgesetzte Beweise
 
