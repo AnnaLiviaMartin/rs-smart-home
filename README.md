@@ -150,4 +150,8 @@ Bernd das Brot: https://erfurt-mitte.de/blogs/erfurt-mitte-blog/bernd-das-brot-m
 
 Sandmännchen: https://www.gmx.ch/magazine/unterhaltung/tv-shows/24-zentimeter-gross-unermuedlich-sandmann-55-30229448
 
+Geschlossenes Schloss: https://www.strzmetal.com/pid18438420/Customized-Safety-Pad-Lock-Brass-Padlock-for-Global-Brands-OEM-ODM-Wholesale.htm
+
+Geöffnetes Schloss: https://www.couhome.com/2024/04/door-lock-types.html
+
 Alle anderen Diagramme/Bilder sind durch uns erstellt worden.
