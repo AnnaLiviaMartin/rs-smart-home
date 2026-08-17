@@ -15,7 +15,7 @@ In einem Smart-Home-System müssen dabei mehrere Aspekte berücksichtigt werden:
 - Welche Räume sind miteinander verbunden?
 - Ist eine Tür geöffnet oder geschlossen?
 - Darf eine Person die Tür öffnen?
-<!-- - Was passiert während des Durchgangs durch die Tür? -->
+- Was passiert während des Durchgangs durch die Tür?
 
 Um diese Fragen schrittweise zu beschreiben, wird das System in drei Modellschritten betrachtet:
 
@@ -45,7 +45,7 @@ Die Räume werden über Türen miteinander verbunden. Eine Tür verbindet dabei 
 
 ## Beispiel: Bernd zeigt Sandmännchen das D Gebäude
 
-Bernd arbeitet in der Hochschule Rhein-Main. Das Gebäude D, in welchem er arbeitet, besteht aus einem Garten und mehreren Räumen, die er betreten kann, wenn sie durch eine Tür miteinander verbunden sind. <!-- Einige der Räume sind für alle betretbar, wie beispielsweise die Flure und die Vorlesungsräume. -->
+Bernd arbeitet in der Hochschule Rhein-Main. Das Gebäude D, in welchem er arbeitet, besteht aus einem Garten und mehreren Räumen, die er betreten kann, wenn sie durch eine Tür miteinander verbunden sind.
 
 Zu Beginn befinden sich Bernd und Sandmännchen im Garten und folgende Grundannahmen werden getroffen:
 
@@ -101,7 +101,7 @@ Darüber hinaus gibt es bestimmte Regeln, die in der Realität immer gelten. Die
 - Eine Tür verbindet genau zwei Räume.
 - Eine Tür kann geöffnet oder geschlossen sein.
 - Eine Person darf eine Tür nur bei geöffneter Tür passieren.
-<!-- - Der Bewegungszustand darf keine Teleportation ermöglichen. -->
+- Der Bewegungszustand darf keine Teleportation ermöglichen.
 
 Sollten diese Bedingungen verletzt werden, sind wohl weder Bernd noch Sandmännchen sicher und befinden sich in akuter Diese-Welt-existiert-so-nicht-Gefahr. Wir schließen diese daher zur Wahrung eines realitätsnahen Ansatzes aus.
 
@@ -189,7 +189,7 @@ Es folgt eine Erklärung zur Defintion der Event-B Modelle.
 
 ### Umsetzung des Groben Modells
 
-Um erste Bewegungsabläufe von Personen zwischen Räumen modellieren zu können <!--, jedoch bereits den Grundaufbau des Gebäudes für die nächsten Verfeinerungsschritte vorzubereiten,--> haben wir zunächst Personen und unterschiedliche Orte als Räume und Gärten definiert. Eine Person kann sich in einem Ort aufhalten.
+Um erste Bewegungsabläufe von Personen zwischen Räumen modellieren zu können haben wir zunächst Personen und unterschiedliche Orte als Räume und Gärten definiert. Eine Person kann sich in einem Ort aufhalten.
 
 ![Grobes Modell mit Bernd in Raum A](pictures/Alloy_Raumplan_Grob_Bernd.png)
 
