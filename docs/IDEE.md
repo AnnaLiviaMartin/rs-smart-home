@@ -379,8 +379,8 @@ Viele der Eigenschaften, die einen Bewegungsschritt betreffen, beweisen wir auf 
 Auf der Belegungsebene zeigen wir Eigenschaften wie zum Beispiel, dass eine Person nach einer groben Bewegung nicht mehr im Ausgangsraum steht:
 
 ```lean
-theorem moveGrob_person_nicht_in_von (G : BipartiteOrtGraph orte) (offen : TuerSet orte → Bool) (p : Person) (von nach : RaumSet orte) (b : Belegung_safe orte) :
-  pre_moveGrobMitTuer G offen p von nach b → p ∉ personenImOrt (moveGrobBelegung p von nach b) von
+theorem moveGrob_person_nicht_in_von {orte : Finset Ort} (G : BipartiteOrtGraph orte) (offen : TuerSet orte → Bool) (p : Person) (von nach : RaumSet orte) (b : Belegung_safe orte)  :
+    pre_moveGrobMitTuer G offen p von nach b → p ∉ personenImOrt (verschiebePerson p (raumAlsOrt von) (raumAlsOrt nach) b) (raumAlsOrt von) := by
 ```
 
 Ein solcher Beweis betrachtet ausschließlich die Belegung: Die Person war vorher im Ausgangsraum, Ausgangs- und Zielraum sind verschieden, und nach der Aktion ist die Person dort nicht mehr enthalten. Weder der übrige Zustand noch `offen`, `letzterRaum` oder die restlichen Invarianten spielen dabei eine Rolle. Dadurch bleibt der Beweis einfach, unabhängig vom restlichen Modell wiederverwendbar und leicht auf ähnliche Aktionen übertragbar.
@@ -388,8 +388,8 @@ Ein solcher Beweis betrachtet ausschließlich die Belegung: Die Person war vorhe
 Auf der Zustandsebene übertragen wir diese Eigenschaft dann auf einen vollständigen Übergang zwischen zwei Zuständen:
 
 ```lean
-theorem moveGrobSchrittZustand_person_nicht_in_von (G : BipartiteOrtGraph orte) (p : Person) (von nach : RaumSet orte) (Z Z' : Zustand orte personen) :
-  moveGrobSchrittZustand G p von nach Z Z' → p ∉ personenImOrt Z'.belegungGrob von
+theorem moveGrobSchrittZustand_person_nicht_in_von {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (von nach : RaumSet orte) (Z Z' : Zustand orte personen) : 
+    moveGrobSchrittZustand G p von nach Z Z' → p ∉ personenImOrt Z'.belegungGrob (raumAlsOrt von) := by
 ```
 
 Die beiden Ebenen beantworten unterschiedliche Fragen: Die Belegungsebene beschreibt, was eine Aktion mit einer Belegung macht, unabhängig davon, wie diese Belegung eingebettet ist. Die Zustandsebene beschreibt, wie sich diese Änderung in einen vollständigen, invariantenerhaltenden Systemschritt einfügt, und ist dafür notwendig, sobald Aussagen über offene Türen, den letzten Raum oder das Zusammenspiel von grober und feiner Belegung getroffen werden sollen. Eine reine Belegungsaussage würde für solche Fragen nicht ausreichen und eine reine Zustandsaussage würde umgekehrt für einfache Aussagen wie die obige unnötig viele, für die eigentliche Aussage irrelevante Zustandsfelder mitschleppen. Wir haben uns daher durchgehend dafür entschieden, zunächst die grundlegende Eigenschaft auf der jeweils einfachsten Ebene zu zeigen und sie anschließend in den vollständigen Zustandsübergang zu heben.
