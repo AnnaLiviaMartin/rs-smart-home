@@ -161,7 +161,7 @@ Räume und Türen sind beide Orte. Dadurch können Personen im feinen Modell vor
 
 # Modellspezifikation
 
-Die fachlichen Anforderungen sind in der [Modellspezifikation](./Modellspezifikation.md) beschrieben. Im Folgenden wird erklärt, wie diese Anforderungen in Alloy und Lean als Modell umgesetzt und bewiesen wurden.
+Die fachlichen Anforderungen sind in der [Modellspezifikation](./MODEL_SPEZIFIKATION.md) beschrieben. Im Folgenden wird erklärt, wie diese Anforderungen in Alloy und Lean als Modell umgesetzt und bewiesen wurden.
 
 # Modellierung in Alloy
 
