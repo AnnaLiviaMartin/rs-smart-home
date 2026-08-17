@@ -1,54 +1,110 @@
-# Smart Home Verification with Alloy 6 and Lean
+# Formale Spezifikation und Verifikation eines Zutritts- und Bewegungssystems mit Alloy und Lean
 
-Dieses Projekt untersucht die formale Modellierung und Verifikation eines Smart-Home-Systems mit Fokus auf:
+Dieses Projekt beschreibt und überprüft ein Smart-Home-System zur Anwesenheitserkennung und Zutrittskontrolle.
 
-- Anwesenheitserkennung
-- Zutritts- und Zugriffskontrolle
-- Wetter- und Umweltsensorik
+Im Mittelpunkt stehen Personen, Räume, Türen und Authentifizierungseinrichtungen. Personen können sich zwischen Räumen bewegen. Der Zugang zu bestimmten Räumen wird über Türen kontrolliert.
 
-Zur Modellierung und Analyse werden **Alloy 6** und **Lean 4** verwendet.
+Für die Modellierung und Analyse werden folgende Werkzeuge verwendet:
 
-## Ziele
+- **Alloy 6** zur Modellprüfung und zur Suche nach Gegenbeispielen
+- **Lean 4** zur formalen Überprüfung und zum Beweisen ausgewählter Eigenschaften
 
-Das Smart Home soll folgende Aspekte berücksichtigen:
+## Dokumentation
 
-### Schwerpunkt 1: Anwesenheitserkennung & Zutrittskontrolle
+Die Dokumentation ist auf mehrere Dateien verteilt. Diese README.md dient als Einstiegspunkt und gibt einen Überblick über das Projekt.
 
-- Raumbelegung verfolgen
-- Maximale Personenzahl in Räumen
+### Fachliche Idee und Motivation
 
-- Notfallmodus: Bei Feuer werden alle Türen entriegelt, Bei Einbruch werden bestimmte Türen verriegelt
-- Mehrstufige Authentifizierung: Raum nur mit Karte + PIN zugänglich
-- Temporäre Berechtigungen: Gastzugang für 24 Stunden
+Die Motivation, die fachliche Problemstellung und die Herleitung des Modells befinden sich in der [Idee.md](docs/Idee.md)
 
-### Schwerpunkt 2: Wetter- und Umweltsensoren
+Dieses Dokument beschreibt unter anderem:
 
-- Regen → Dachfenster schließen
-- Hohe Windstärke → Markise einfahren
-- Hohe Temperatur → Rollläden schließen
-- Schlechte Luftqualität → Lüftung aktivieren
+- das zugrunde liegende Problem,
+- die beteiligten Personen und Orte,
+- die Bewegungsmöglichkeiten,
+- die Bedeutung der Türen,
+- die Unterscheidung zwischen grobem und feinem Modell.
+
+### Fachliche Spezifikation
+
+Die fachlichen Regeln und Bedingungen des Systems befinden sich in [Model_Spezifikation.md](docs/Model_Spezifikation.md)
+
+Dort wird das Modell zunächst unabhängig von Alloy und Lean beschrieben.
+
+Behandelt werden unter anderem:
+
+- Systemobjekte,
+- Zustände,
+- Bewegungsregeln,
+- Türzustände,
+- Authentifizierung,
+- Invarianten,
+- erwartete Systemabläufe.
+
+### Umsetzungsentscheidungen
+
+Die Beschreibung der konkreten Modellierungs- und Implementierungsentscheidungen befindet sich in [Umsetzung.md](docs/Umsetzung.md)
+
+Dort wird erklärt, wie die fachlichen Anforderungen in Alloy und Lean umgesetzt wurden.
 
 ## Projektstruktur
+
+Das Projekt ist wie folgt aufgebaut:
 
 ```text
 project/
 │
 ├── README.md
-├── MODEL_SPECIFICATION.md
+│
+├── docs/
+│   ├── Idee.md
+│   ├── Model_Spezifikation.md
+│   ├── Umsetzung.md
+│   └── diagrams/
+│   └── pictures/
 │
 ├── alloy/
 │   ├── smart_home.als
+│   └── smart_home.thm
 │
 ├── lean/
 │   ├── SmartHome.lean
-│
-└── docs/
-    └── diagrams/
+│   └── SmartHomeExamples.lean
 ```
 
-## Installation
+### Verzeichnisse und Dateien
+
+Die Umsetzungen befinden sich in den folgenden Verzeichnissen:
+
+- [Alloy-Modell](alloy/)
+- [Lean-Modell](lean/)
+
+Das Alloy-Modell dient insbesondere dazu, mögliche Modellinstanzen zu erzeugen und Eigenschaften innerhalb eines begrenzten Suchraums zu überprüfen.
+
+Lean wird verwendet, um ausgewählte Eigenschaften formal zu formulieren und zu beweisen.
+
+Weitere wichtige Dateien, sind folgend aufgelistet:
+
+| Pfad | Beschreibung |
+| :--- | :--- |
+| `docs/` | Ausführliche Projektdokumentation |
+| `docs/diagrams/` | PlantUML-Diagramme |
+| `docs/pictures/` | PlantUML-Bilder |
+| `alloy/` | Alloy-Modell und zugehörige Darstellungsdateien |
+| `lean/` | Lean-Definitionen, Beispiele und Beweise |
+| `smart_home.als` | Formale Alloy-Spezifikation |
+| `SmartHome.lean` | Formale Lean-Spezifikation |
+| `SmartHomeExamples.lean` | Beispiele für die Lean-Spezifikation |
+
+
 
 ## Alloy ausführen
+
+### Voraussetzungen
+
+Für die Ausführung wird Alloy 6 benötigt.
+
+### Ausführung
 
 Modell laden:
 
@@ -62,13 +118,21 @@ Analyse starten:
 run {}
 ```
 
-oder
+oder Eigenschaft überprüfen:
 
 ```alloy
 check PropertyName
 ```
 
+Die Style-Datei für's Ansehen des Alloy-Modells, findet sich unter ./alloy/todo.td
+
 ## Lean ausführen
+
+### Voraussetzungen
+
+Für die Ausführung wird Lean 4 mit Lake benötigt.
+
+### Ausführung
 
 Projekt bauen:
 
@@ -82,8 +146,10 @@ Einzelne Datei prüfen:
 lean SmartHome.lean
 ```
 
-## Modellbeschreibung
+Lean ist in zwei Dateien aufgesplittet. Die erste Datei todo.td stellt die Beweise bereit. Die zweite Datei todo2.td stellt ein Beispiel zur Verfügung.
 
-Die fachliche Beschreibung des Smart-Home-Modells befindet sich in:
+## Quellen
 
-[MODEL_SPECIFICATION.md](MODEL_SPECIFICATION.md)
+Bernd das Brot: https://erfurt-mitte.de/blogs/erfurt-mitte-blog/bernd-das-brot-merchandise-im-onlineshop-kultiges-kultbrot-fuer-fans
+
+Sandmännchen: https://www.gmx.ch/magazine/unterhaltung/tv-shows/24-zentimeter-gross-unermuedlich-sandmann-55-30229448
