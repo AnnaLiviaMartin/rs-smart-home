@@ -446,15 +446,13 @@ Die in Lean umgesetzten Beweise umfassen:
 - Andere Öffnungszustände bleiben unverändert.
 - Belegungen bleiben unverändert.
 
-# Vergleich von Alloy und Lean
+# Transparenz über KI-Nutzung
 
-| Alloy | Lean |
-| :--- | :--- |
-| Suche nach Gegenbeispielen | Konstruktion formaler Beweise |
-| Zustände und Relationen | Typen, Funktionen und Sätze |
-| `check` | `theorem` beziehungsweise `lemma` |
-| begrenzter Suchraum | grundsätzlich allgemeiner Beweis |
-| Modellprüfung | interaktives beziehungsweise automatisiertes Beweisen |
+An dieser Stelle möchten wir transparent über unseren Einsatz von KI-Werkzeugen aufklären. Insbesondere für den Lean-Teil der Arbeit haben wir KI-Unterstützung genutzt. Das hatte zwei Gründe: Zum einen war uns die Objekt-Syntax und der allgemeine Umgang mit Objekten in Beweisen in Lean zu Beginn nicht vertraut, zum anderen war der Umfang des Event-B-Ansatzes groß und dementsprechend schwer auf Objekt-Syntax anwendbar.
+
+Gerade zu Anfang waren wir uns bei der korrekten Objektstruktur (SimpleGraph und Zustand als zentrale Objekte) sowie beim eigentlichen Beweisvorgehen mit Event-B in Lean noch sehr unsicher. Da uns insbesondere nicht klar war, wie sich Invarianten und Axiome sinnvoll im Zusammenspiel mit unseren Objekten formulieren lassen, fiel uns der Einstieg zunächst schwer. Hier haben wir für die Evaluation von Möglichkeiten, deren Bewertung und der Entwicklung erster Ansätze daher auf KI-Werkzeuge zugegriffen.
+
+Für die Ausarbeitung haben wir dabei vor allem die [Hochschul-KI](https://ki.hs-rm.de) genutzt. Sollten in unserer Arbeit daher Lean-Formulierungen auftauchen, die unüblich oder nicht idiomatisch gewöhnlich sind, liegt das an unserem zu diesem Zeitpunkt noch begrenzten eigenen Wissen und nicht an mangelnder Sorgfalt.
 
 # Zusammenfassung
 
