@@ -302,43 +302,159 @@ stop
 
 # Beweisen mit Lean
 
-Lean wird für mathematische Beweise verwendet.
+Lean wird für mathematische Beweise verwendet. Wir haben dabei im ersten Schritt zuerst Alloy spezifiziert (siehe [Alloy](#modellierung-in-alloy)) und dann aus den dort spezifizierten Objekten und Bedingungen (pre-/post-/frame-Bedingungen) Lean abgeleitet. Um die Spezifizierung hier genauer Beschreiben zu können, wird sie folgend in die Umsetzung der Objekte und der Beweise unterteilt.
 
-In Lean werden insbesondere folgende Eigenschaften betrachtet:
+Besonders herausfordernd war hierbei, dass wir komplexe Objekte für unsere Event-B-Beweise nutzen mussten und bisher wenig Erfahrung beim Beweisen mit komplexen Objekten hatten.
 
-- Die Invarianten bleiben nach einer Bewegung erhalten.
-- Eine Person befindet sich nach einer Bewegung weiterhin genau an einem Ort.
-- Eine Tür verbindet weiterhin genau zwei Räume.
-- Eine fehlgeschlagene Authentifizierung verändert den Zustand nicht.
-- Die Verfeinerung liefert dasselbe fachliche Ergebnis wie das grobe Modell.
+## Abbildung der Objekte aus Alloy nach Lean
 
-## Lean-Modelle
+Durch Alloy war bereits das Konstrukt der Objekte vorgegeben. Dieses wollten wir so ähnlich wie möglich übernehmen. Problematisch war dabei, dass in Lean keine `var` Variablen (mit zeitlichen Veränderungsmöglichkeiten) modelliert werden können. Ebenso ist es in Lean nicht möglich mit "einfachen" Datentypen einen Graphen zu erstellen, welchen wir für die Modellierung der Räume/des Gebäudes benötigt hätten.
 
-Dieses Kapitel beschreibt, wie Lean verwendet wird.
+Wir haben uns daher entschieden bei unseren Objekten in zwei Kategorien zu unterscheiden:
+- Objekte, die eine statische Struktur wiederspiegeln
+- und Objekte, die zeitabhängig sind und ihren Inhalt verändern können.
 
-### Abbildung der Objekte aus Alloy nach Lean
+Teil der statischen Struktur sind damit alle Räume und Türen, da diese ihren Standort nicht ändern. Teil der zeitabhängigen Inhalte sind alle Objekte, deren Inhalte sich verändern, z.b. die Belegung der Räume, der letzte Raum der Personen und ob eine Tür gerade offen oder geschlossen ist.
 
-### Definition von Zuständen
+### Umsetzung der statischen Struktur
+
+Die statische Struktur haben wir über das Lean-Interface SimpleGraph umgesetzt. Ein SimpleGraph bringt Nachbarschaftssymmetrie und Schleifenfreiheit bereits als Bestandteil seiner Definition mit. Beides mussten wir dadurch nicht selbst als Eigenschaft unseres Gebäudeplans nachweisen, sondern haben es "geschenkt" bekommen, sobald wir unseren GebaeudePlan als SimpleGraph (OrtSet Orte) definiert haben. Ebenso kommen mit SimpleGraph bereits bewiesene Sätze einher, welche wir für die Beweise einsetzen konnten.
+
+Für unser Modell reicht ein beliebiger SimpleGraph allerdings nicht aus, da er auch Kanten zwischen zwei Räumen oder zwei Türen zulassen würde. Fachlich soll ein Raumwechsel aber immer über eine Tür erfolgen, und eine Tür soll immer genau zwei Räume verbinden, niemals eine andere Tür. Wir haben diese Einschränkung daher als eigene Eigenschaft KanteIsBipartite formuliert, die für jede Kante verlangt, dass sie einen Raum mit einer Tür verbindet, und bündeln sie zusammen mit weiteren Grundeigenschaften in der Struktur BipartiteOrtGraph, die auf GebaeudePlan aufbaut. Damit ist ein Gebäudeplan im Sinne unseres Modells nicht irgendein Graph, sondern von vornherein ein Graph, der die fachliche Bedingung "Raum–Tür–Raum" erfüllt und gleichzeitig ein SimpleGraph ist.
+
+Auch die weiteren Eigenschaften von BipartiteOrtGraph, etwa dass es genau einen Garten gibt und dieser genau eine angrenzende Tür besitzt, haben wir nicht als freistehende axiom-Deklarationen formuliert, sondern als Felder der Struktur, die bei der Konstruktion eines konkreten Gebäudeplans tatsächlich erfüllt und damit bewiesen werden müssen. Ein axiom hätte Lean lediglich angewiesen, die jeweilige Aussage ungeprüft zu übernehmen. Uns war dagegen wichtig zu zeigen, dass unsere Definitionen nicht ins Leere laufen, sondern dass sich mit ihnen tatsächlich ein Gebäudeplan konstruieren lässt, der alle geforderten Eigenschaften erfüllt. Das zeigen wir an unserem Beispielgebäude (siehe [Beispiel.lean](/LeanProjekt/LeanProjekt/Beispiel.lean)), für das wir BipartiteOrtGraph explizit instanziieren und dabei jede der geforderten Eigenschaften beweisen.
+
+Für die wiederkehrenden Datentypen OrtSet, TuerSet, RaumSet und PersonSet haben wir jeweils Abkürzungen definiert, die ein Element zusammen mit dem Nachweis bündeln, dass es tatsächlich zur betrachteten Gebäudekonfiguration orte beziehungsweise Personenmenge personen gehört. Dadurch legt Lean an vielen Stellen bereits automatisch fest, mit welchen konkreten Objekten wir arbeiten dürfen, ohne dass wir die Zugehörigkeit jedes Mal von Hand mitführen müssten.
+
+Durch diese Definitionen ergeben sich bereits mehrere Eigenschaften implizit, ohne dass wir sie gesondert beweisen mussten:
+
+- Der Öffnungszustand einer Tür besitzt immer genau einen Wahrheitswert, da `offen : OrtSet orte → Bool` bereits als totale Funktion nach `Bool` definiert ist.
+- Der letzte Raum einer Person ist entweder ein Raum oder nicht gesetzt, da `letzterRaum : Person → Option Raum` bereits genau diese beiden Fälle abbildet.
+- Jede Person ist entweder Bewohner:in oder Gast, da dies durch den induktiven Datentyp `Person` mit seinen beiden Konstruktoren bereits erschöpfend festgelegt ist.
+- Räume und Türen sind stets unterscheidbare Orte, da `Ort.Raum` und `Ort.Tuer` getrennte Konstruktoren desselben induktiven Typs `Ort` sind.
+- Nachbarschaftssymmetrie und Schleifenfreiheit sind, wie oben beschrieben, bereits Bestandteil von `SimpleGraph`.
+
+Diese Eigenschaften mussten wir also nicht zusätzlich als eigene Sätze formulieren und beweisen, sondern sie folgen bereits aus der Art, wie wir die zugrunde liegenden Typen konstruiert haben. Das ist einer der Vorteile, ein Modell möglichst direkt über die Typstruktur statt über nachträgliche Zusatzbedingungen abzubilden: Ein falsch konstruiertes Objekt lässt sich in diesen Fällen in Lean gar nicht erst hinschreiben.
+
+### Umsetzung der veränderlichen Struktur (Zuständen) 
+
+Für die veränderlichen Anteile des Modells hätten wir prinzipiell auch ohne einen eigenen Zustand-Typ arbeiten können, indem wir Belegung, Öffnungszustand und letzten Raum als lose nebeneinanderstehende Listen beziehungsweise Funktionen durch die Beweise reichen. Wir haben uns stattdessen für eine gemeinsame Struktur Zustand entschieden, da sich damit an einer Stelle festlegen lässt, welche Grundeigenschaften ein Zustand immer erfüllen muss. Ein Zustand lässt sich in Lean gar nicht erst anlegen, wenn diese Eigenschaften nicht erfüllt sind, denn sie sind Teil der Struktur selbst und nicht nur nachträglich behauptete Aussagen über sie.
+
+Dadurch verschiebt sich die eigentliche Beweislast von der Konstruktion in die Veränderung: Statt bei jeder Verwendung eines Zustands erneut zeigen zu müssen, dass er sinnvoll ist, muss nur noch bei jedem Übergang gezeigt werden, dass der neue Zustand die Invarianten weiterhin erfüllt. Diese Invarianten haben wir bewusst nicht als freistehende axiom-Deklarationen formuliert, sondern als Felder der Struktur beziehungsweise als zu beweisende Eigenschaften über unserem Beispielgebäude (siehe Beispiel.lean). Ein axiom würde Lean lediglich mitteilen, die Aussage ungeprüft zu akzeptieren, für uns war hingegen wichtig, tatsächlich zu zeigen, dass sich mit unseren Definitionen überhaupt ein Zustand konstruieren lässt, der allen Anforderungen genügt, und nicht nur, dass wir uns die entsprechende Eigenschaft wünschen.
+
+Für die häufig wiederkehrenden Datentypen OrtSet, TuerSet, RaumSet und PersonSet haben wir jeweils Abkürzungen definiert, die einen Ort beziehungsweise eine Person zusammen mit dem Nachweis bündeln, dass dieses Element tatsächlich zur jeweils betrachteten Gebäudekonfiguration orte beziehungsweise Personenmenge personen gehört. Dadurch legt Lean die zulässigen Typen an vielen Stellen automatisch fest, ohne dass wir die Zugehörigkeit jedes Mal erneut von Hand mitführen müssen.
+
+Ein Grundproblem bei der Modellierung veränderlicher Daten in Lean ist, dass es keine Variablen im klassischen Sinn gibt: Ein Wert lässt sich nicht "an Ort und Stelle" verändern, jede Änderung erzeugt formal ein neues, unabhängiges Objekt. Hätten wir die Belegung eines Ortes direkt als Bestandteil des Gebäudegraphen modelliert, etwa als Eigenschaft der Knoten selbst, so hätte jede Bewegung einer einzigen Person einen vollständig neuen Graphen erzeugt, dessen statische Eigenschaften wir jedes Mal erneut hätten nachweisen müssen. Aus diesem Grund trennen wir strikt zwischen der statischen Struktur (dem GebaeudePlan beziehungsweise BipartiteOrtGraph, der über die gesamte Modellierung hinweg unverändert bleibt) und den veränderlichen Inhalten (Belegung_safe, offen, letzterRaum), die wir als eigene, vom Graphen unabhängige Abbildungen in Zustand führen. Eine Bewegung verändert damit ausschließlich diese Abbildungen und erzeugt einen neuen Zustand. Der zugrunde liegende Gebäudeplan bleibt über alle Schritte hinweg derselbe Wert und muss nicht erneut bewiesen werden.
+
+Der Öffnungszustand einer Tür wird in unserem Modell nur explizit durch das Ereignis oeffneTuer verändert, und zwar ausschließlich vom geschlossenen in den geöffneten Zustand. Das entspricht der fachlichen Anforderung aus der Spezifikation, dass eine Authentifizierung niemals Türen schließt, sondern nur öffnet. Das eigenständige Zufallen einer geöffneten Tür nach einer beliebigen Zeit haben wir hingegen nicht als eigenes Lean-Ereignis modelliert, sondern bewusst offengelassen: Die Spezifikation macht dazu selbst keine Aussage darüber, wann genau dies geschieht, sondern nur, dass es irgendwann geschieht. Ein solches "irgendwann" ist eine Lebendigkeits- und keine Sicherheitseigenschaft und hätte andere Beweistechniken erfordert als die von uns betrachteten pre-/post-/frame-Bedingungen einzelner Schritte.
+
+## Beweise
+
+Nach der Definition der Objekte mit ihren Eigenschaften konnten wir dann Beweise schreiben. Die Beweise orientieren sich an den Definitionen von Alloy mit den pre-/post- und frame-Bedingungen.
+
+Es gibt dabei zwei Abstaktionsebenen:
+1. Beweise direkt über die Listen
+2. Beweise über den Zustand, verbindend aller pre-/post-Bedingungen
+
+In Lean werden daher insbesondere folgende Eigenschaften betrachtet:
+
+- Die Frame-Bedingungen und Grundannahmen bleiben nach einer Bewegung erhalten.
+- Pre- und Post-Bedingungen umschließen eine Aktion.
+- Eine ausgeführte Aktion führt nicht zu inkonsistenten Zuständen.
+
+Diese Eigenschaften wurden dann über die zwei Abstraktionsebenen sichergestellt. Es gibt dabei immer eine Aktionsmethode, welche die eigentliche Aktion ausführen (bspw. das Entfernen einer Person A aus einem Raum X). Um diese Aktion herum sind dann die pre-/post- und frame-Bedingungen geschachtelt
 
 ### Definition von Übergängen
 
-### Formulierung der Invarianten
+Jeder Übergang ist nach demselben Schema aufgebaut: Eine Vorbedingung (`pre_...`) beschreibt, welche Voraussetzungen vor dem Schritt gelten müssen, eine Aktionsfunktion (`aktion_...`) berechnet die eigentliche Änderung, und eine Nachbedingung (`post_...`) beschreibt den resultierenden Zustand. Frame-Bedingungen (`frame_...`) legen fest, welche Anteile des Zustands von einem Schritt unberührt bleiben. Diese vier Bestandteile fassen wir jeweils in einer gemeinsamen `...Schritt`-Relation zusammen (zum Beispiel `moveGrobSchrittZustand`, `betreteTuerSchritt`, `verlasseTuerSchritt`, `oeffneTuerSchritt`), sodass ein einzelner Übergang zwischen zwei Zuständen `Z` und `Z'` immer über genau eine solche Relation beschrieben wird. Das entspricht in Aufbau und Zweck den `pred`-Definitionen in Alloy und stellt sicher, dass alle im Modell zugelassenen Änderungen an einer Stelle gebündelt sind, statt über verstreute Einzelaussagen nachgewiesen werden zu müssen.
 
-### Beweis ausgewählter Eigenschaften
+### Formulierung der Invarianten und Axiome
 
-# Vergleich von Alloy und Lean
+Warum wir Grundeigenschaften grundsätzlich nicht als axiom, sondern als zu beweisende Felder formulieren, wurde bereits in den vorherigen Abschnitten begründet. Ergänzend dazu ist an dieser Stelle wichtig, wie die einzelnen Grundregeln aus der Spezifikation in Lean formuliert sind: Wir haben jede Regel als eigenständige, benannte Prop-Definition festgehalten (etwa `einePersonGenauEinOrt`, `tuerOffenWennPerson`, `relation_verfeinerung` oder `nurBekanntePersonen`), statt sie direkt und unbenannt in BipartiteOrtGraph beziehungsweise Zustand hineinzuschreiben. Dadurch lässt sich jede Regel einzeln referenzieren, unabhängig von der Struktur formulieren und in mehreren Beweisen wiederverwenden. Die Felder von BipartiteOrtGraph und Zustand binden diese Definitionen dann lediglich ein, anstatt die Bedingungen selbst zu enthalten. Das entspricht in der Struktur den benannten fact-Blöcken in Alloy und macht zugleich sichtbar, welche fachliche Regel aus der Spezifikation hinter welcher Invariante steht.
 
-| Alloy | Lean |
-| :--- | :--- |
-| Suche nach Gegenbeispielen | Konstruktion formaler Beweise |
-| Zustände und Relationen | Typen, Funktionen und Sätze |
-| `check` | `theorem` beziehungsweise `lemma` |
-| begrenzter Suchraum | grundsätzlich allgemeiner Beweis |
-| Modellprüfung | interaktives beziehungsweise automatisiertes Beweisen |
+### Zwei Abstraktionsebenen der Beweise
 
-# Fazit und Ausblick
+Viele der Eigenschaften, die einen Bewegungsschritt betreffen, beweisen wir auf zwei unterschiedlichen Ebenen: einmal direkt über die Belegung (Belegung_safe), einmal über den vollständigen Zustand. Das ist keine unnötige Verdopplung, sondern eine bewusste Schichtung.
 
-<!-- Erscheint mir mehr wie eine Zusammenfassung und weniger als Fazit -->
+Auf der Belegungsebene zeigen wir Eigenschaften wie zum Beispiel, dass eine Person nach einer groben Bewegung nicht mehr im Ausgangsraum steht:
+
+```lean
+theorem moveGrob_person_nicht_in_von {orte : Finset Ort} (G : BipartiteOrtGraph orte) (offen : TuerSet orte → Bool) (p : Person) (von nach : RaumSet orte) (b : Belegung_safe orte)  :
+    pre_moveGrobMitTuer G offen p von nach b → p ∉ personenImOrt (verschiebePerson p (raumAlsOrt von) (raumAlsOrt nach) b) (raumAlsOrt von) := by
+```
+
+Ein solcher Beweis betrachtet ausschließlich die Belegung: Die Person war vorher im Ausgangsraum, Ausgangs- und Zielraum sind verschieden, und nach der Aktion ist die Person dort nicht mehr enthalten. Weder der übrige Zustand noch `offen`, `letzterRaum` oder die restlichen Invarianten spielen dabei eine Rolle. Dadurch bleibt der Beweis einfach, unabhängig vom restlichen Modell wiederverwendbar und leicht auf ähnliche Aktionen übertragbar.
+
+Auf der Zustandsebene übertragen wir diese Eigenschaft dann auf einen vollständigen Übergang zwischen zwei Zuständen:
+
+```lean
+theorem moveGrobSchrittZustand_person_nicht_in_von {orte : Finset Ort} {personen : Finset Person} (G : BipartiteOrtGraph orte) (p : Person) (von nach : RaumSet orte) (Z Z' : Zustand orte personen) : 
+    moveGrobSchrittZustand G p von nach Z Z' → p ∉ personenImOrt Z'.belegungGrob (raumAlsOrt von) := by
+```
+
+Die beiden Ebenen beantworten unterschiedliche Fragen: Die Belegungsebene beschreibt, was eine Aktion mit einer Belegung macht, unabhängig davon, wie diese Belegung eingebettet ist. Die Zustandsebene beschreibt, wie sich diese Änderung in einen vollständigen, invariantenerhaltenden Systemschritt einfügt, und ist dafür notwendig, sobald Aussagen über offene Türen, den letzten Raum oder das Zusammenspiel von grober und feiner Belegung getroffen werden sollen. Eine reine Belegungsaussage würde für solche Fragen nicht ausreichen und eine reine Zustandsaussage würde umgekehrt für einfache Aussagen wie die obige unnötig viele, für die eigentliche Aussage irrelevante Zustandsfelder mitschleppen. Wir haben uns daher durchgehend dafür entschieden, zunächst die grundlegende Eigenschaft auf der jeweils einfachsten Ebene zu zeigen und sie anschließend in den vollständigen Zustandsübergang zu heben.
+
+### Umgesetzte Beweise
+
+Die in Lean umgesetzten Beweise umfassen:
+
+**Statische Struktur**
+- Räume und Türen sind disjunkt.
+- Nur Raum–Tür-Kanten sind erlaubt.
+- Nachbarschaft ist symmetrisch.
+- Graph ist schleifenfrei.
+- Genau ein Garten existiert.
+- Der Garten hat genau eine Tür.
+- Jede Tür verbindet genau zwei Räume.
+
+**Zustand**
+- Jede betrachtete Person befindet sich im groben Modell genau einmal.
+- Jede betrachtete Person befindet sich im feinen Modell genau einmal.
+- Keine Person befindet sich grob in einer Tür.
+- Nur bekannte Personen kommen in den Belegungen vor.
+- Eine belegte feine Tür ist offen.
+- Die feine Belegung verfeinert die grobe Belegung.
+- Die Verfeinerungsrelation bleibt erhalten.
+
+**Grobe Bewegung**
+- Person verlässt den Ausgangsraum.
+- Person kommt im Zielraum an.
+- Andere Personen bleiben unverändert. 
+- Die Personen im von Raum bleiben unverändert bis auf p. 
+- Nach Bewegung enthält Zielort vorherige Personen + p.
+- Türen und Graph bleiben unverändert.
+- Es gibt eine offene Tür die die zwei Räume miteinander verbindet.
+- Keine grobe Bewegung in/über eine Tür.
+- Der Öffnungsstatus der Tür zwischen den zwei Räumen verändert sich nicht.
+- Keine grobe Bewegung in eine Tür. -> durch Typen sichergestellt
+
+**Feine Bewegung**
+- Person kann eine offene Tür betreten.
+- Person befindet sich danach in der Tür.
+- Grobes Modell bleibt beim Betreten unverändert.
+- Person kann die Tür in den Zielraum verlassen.
+- Person befindet sich danach im Zielraum.
+- Der grobe Schritt stimmt mit dem Ergebnis des feinen Schritts überein.
+- Andere Personen bleiben unverändert.
+- letzterRaum wird korrekt aktualisiert. -> erst nach verlasseTuer ist der letzteRaum neu gesetzt worden, nicht schon bei betreteTuer
+- Die Verfeinerungsrelation bleibt nach Aktionen erhalten.
+
+**Türöffnung**
+- Nur Bewohner:innen dürfen Türen öffnen.
+- Die Person muss an die Tür angrenzen.
+- Eine geschlossene Tür wird geöffnet.
+- Andere Öffnungszustände bleiben unverändert.
+- Belegungen bleiben unverändert.
+
+# Transparenz über KI-Nutzung
+
+An dieser Stelle möchten wir transparent über unseren Einsatz von KI-Werkzeugen aufklären. Insbesondere für den Lean-Teil der Arbeit haben wir KI-Unterstützung genutzt. Das hatte zwei Gründe: Zum einen war uns die Objekt-Syntax und der allgemeine Umgang mit Objekten in Beweisen in Lean zu Beginn nicht vertraut, zum anderen war der Umfang des Event-B-Ansatzes groß und dementsprechend schwer auf Objekt-Syntax anwendbar.
+
+Gerade zu Anfang waren wir uns bei der korrekten Objektstruktur (SimpleGraph und Zustand als zentrale Objekte) sowie beim eigentlichen Beweisvorgehen mit Event-B in Lean noch sehr unsicher. Da uns insbesondere nicht klar war, wie sich Invarianten und Axiome sinnvoll im Zusammenspiel mit unseren Objekten formulieren lassen, fiel uns der Einstieg zunächst schwer. Hier haben wir für die Evaluation von Möglichkeiten, deren Bewertung und der Entwicklung erster Ansätze daher auf KI-Werkzeuge zugegriffen.
+
+Für die Ausarbeitung haben wir dabei vor allem die [Hochschul-KI](https://ki.hs-rm.de) genutzt. Sollten in unserer Arbeit daher Lean-Formulierungen auftauchen, die unüblich oder nicht idiomatisch gewöhnlich sind, liegt das an unserem zu diesem Zeitpunkt noch begrenzten eigenen Wissen und nicht an mangelnder Sorgfalt.
+
+# Zusammenfassung
 
 In dieser Arbeit wurde ein Zugangskontrollsystem modelliert, in dem sich Personen zwischen verschiedenen Räumen bewegen können. Dabei wurden Räume, Türen, Personen, Berechtigungen und Authentifizierungsgeräte berücksichtigt.
 
@@ -350,8 +466,18 @@ In einem verfeinerten Schritt haben wir die Zwischenschritte in den Türen hinzu
 
 In dem Schritt der Authentifizierung wurde nun eine erste Bedingung hinzugefügt, dass Personen Bewohner sein müssen, damit sie Türen öffnen können. Diese Verfeinerung könnte einerseits durch weitere Bedingungen ausgebaut werden.
 
-Wenn man das System wiederum nach Event-B ausarbeiten möchte, könnte man den jetzigen Authentifizierungsschritt wiederum als Blackbox betrachten und in der Hinsicht das System um weitere Logik durch das Hinzufügen von Verfeinerungsschritten ergänzen.
+Insgesamt bildet das Modell eine vereinfachte, aber erweiterbare Grundlage für die formale Beschreibung eines Zugangskontrollsystems.
+
+# Ausblick
+
+Wenn man das System wiederum nach Event-B ausweiten möchte, könnte man den jetzigen Authentifizierungsschritt wiederum als Blackbox betrachten und in der Hinsicht das System um weitere Logik durch das Hinzufügen von Verfeinerungsschritten ergänzen.
 
 So könnte beispielsweise die Authentifizierung nicht nur überprüfen, ob es sich bei der Person um einen Bewohner handelt, sondern auch, dass eine maximale Kapazität des Raumes eingehalten wird. Es könnten aber auch andere Abhängigkeiten modelliert werden, beispielsweise dass Räume nur zu bestimmten Uhrzeiten betreten werden dürfen. Da es gerade bei der Authentifizierung sehr viele Möglichkeiten gibt, Raumzugänge zu regeln, wäre hier eine breite Komplexität in diesem Verfeinerungsschritt möglich. Dabei könnte eine Struktur zur Hinterlegung dieser Regeln entwickelt werden, beispielsweise könnte jeder Raum, je nach Raumtyp, eigene Regeln besitzen, die von einem Authentifizierungsgerät ausgelesen und auf jeweilige externe Gegebenheiten, beispielsweise Personentypen, Wetterbedingungen oder Uhrzeiten, angewendet werden können. Auch könnten mögliche parallele Authentifizierungen von Personen in gleichen Räumen modelliert werden und eventuelle Regelverletzungen der Authentifizierung in solchen Situationen erkannt, und entsprechende Spezifikationslücken geschlossen werden.
 
-Insgesamt bildet das Modell eine vereinfachte, aber erweiterbare Grundlage für die formale Beschreibung eines Zugangskontrollsystems.
+# Fazit
+
+Das eingangs gesetzte Ziel, ein Zugangskontrollsystem sowohl mit Alloy als auch mit Lean zu modellieren, konnte erreicht werden: Alloy hat sich für die explorative Phase bewährt, in der die eigentlichen Anforderungen an das System erst noch gefunden werden mussten. Über die Suche nach Gegenbeispielen ließen sich fehlende Frame-Conditions und unvollständige Vorbedingungen schnell aufdecken, ohne dass wir dafür bereits einen vollständigen formalen Beweis führen mussten. Erst nachdem sich die Anforderungen über die drei Verfeinerungsschritte hinweg auf diese Weise stabilisiert hatten, war Lean der passende nächste Schritt, um dieselben Eigenschaften nicht nur für endlich viele geprüfte Fälle, sondern allgemeingültig zu zeigen.
+
+Dabei hat sich gezeigt, dass die beiden Werkzeuge sich weniger konkurrierend als ergänzend verhalten. Alloy war schnell darin, uns auf Modellierungsfehler hinzuweisen; Lean hat uns hingegen gezwungen, jede einzelne Voraussetzung explizit zu benennen, da nichts implizit "mitgemeint" sein durfte. Gerade dieser Zwang zur Vollständigkeit war zugleich der größte Mehrwert und die größte Hürde der Arbeit: Eigenschaften, die in Alloy fast beiläufig als facts formuliert waren, mussten in Lean an geeigneter Stelle in der Typstruktur verankert oder eigens bewiesen werden, bevor überhaupt ein sinnvoller Zustand oder Gebäudeplan konstruierbar war.
+
+Die Trennung zwischen statischer und veränderlicher Struktur sowie die Aufteilung der Beweise in eine Belegungs- und eine Zustandsebene haben sich dabei als tragfähiger Lösungsweg für den in Lean grundsätzlich fehlenden Begriff der veränderlichen Variable erwiesen. Beide Entscheidungen waren zu Beginn der Arbeit nicht absehbar, sondern haben sich erst im Umgang mit den konkreten Beweisproblemen als notwendig herausgestellt, und sie dürften auch über dieses Modell hinaus auf ähnlich gelagerte Modellierungsaufgaben übertragbar sein.
