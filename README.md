@@ -67,9 +67,10 @@ project/
 │   ├── smart_home.als
 │   └── smart_home.thm
 │
-├── lean/
-│   ├── SmartHome.lean
-│   └── SmartHomeExamples.lean
+├── LeanProjekt/
+│   ├── LeanProjekt
+│       ├── Main.lean
+│       └── Beispiel.lean
 ```
 
 ### Verzeichnisse und Dateien
@@ -77,7 +78,7 @@ project/
 Die Umsetzungen befinden sich in den folgenden Verzeichnissen:
 
 - [Alloy-Modell](alloy/)
-- [Lean-Modell](lean/)
+- [Lean-Modell](LeanProjekt/LeanProjekt)
 
 Das Alloy-Modell dient insbesondere dazu, mögliche Modellinstanzen zu erzeugen und Eigenschaften innerhalb eines begrenzten Suchraums zu überprüfen.
 
@@ -88,15 +89,10 @@ Weitere wichtige Dateien, sind folgend aufgelistet:
 | Pfad | Beschreibung |
 | :--- | :--- |
 | `docs/` | Ausführliche Projektdokumentation |
-| `docs/diagrams/` | PlantUML-Diagramme |
-| `docs/pictures/` | PlantUML-Bilder |
 | `alloy/` | Alloy-Modell und zugehörige Darstellungsdateien |
-| `lean/` | Lean-Definitionen, Beispiele und Beweise |
 | `smart_home.als` | Formale Alloy-Spezifikation |
-| `SmartHome.lean` | Formale Lean-Spezifikation |
-| `SmartHomeExamples.lean` | Beispiele für die Lean-Spezifikation |
-
-
+| `Main.lean` | Formale Lean-Spezifikation |
+| `Beispiel.lean` | Beispiele für die Lean-Spezifikation |
 
 ## Alloy ausführen
 
@@ -124,7 +120,7 @@ oder Eigenschaft überprüfen:
 check PropertyName
 ```
 
-Die Style-Datei für's Ansehen des Alloy-Modells, findet sich unter ./alloy/todo.td
+Die Style-Datei für's Ansehen des Alloy-Modells, findet sich unter [Styling](/alloy/smart_home.thm)
 
 ## Lean ausführen
 
@@ -143,13 +139,15 @@ lake build
 Einzelne Datei prüfen:
 
 ```bash
-lean SmartHome.lean
+lean Main.lean
 ```
 
-Lean ist in zwei Dateien aufgesplittet. Die erste Datei todo.td stellt die Beweise bereit. Die zweite Datei todo2.td stellt ein Beispiel zur Verfügung.
+Lean ist in zwei Dateien aufgesplittet. Die erste Datei [Main.lean](/LeanProjekt/LeanProjekt/Main.lean) stellt die Beweise bereit. Die zweite Datei  [Beispiel.lean](/LeanProjekt/LeanProjekt/Beispiel.lean) stellt ein Beispiel zur Verfügung.
 
-## Quellen
+## Bild-Quellen
 
 Bernd das Brot: https://erfurt-mitte.de/blogs/erfurt-mitte-blog/bernd-das-brot-merchandise-im-onlineshop-kultiges-kultbrot-fuer-fans
 
 Sandmännchen: https://www.gmx.ch/magazine/unterhaltung/tv-shows/24-zentimeter-gross-unermuedlich-sandmann-55-30229448
+
+Alle anderen Diagramme/Bilder sind durch uns erstellt worden.

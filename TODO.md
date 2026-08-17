@@ -1,6 +1,3 @@
-- Dateinamen überprüfen in Doku
-- Projektstruktur überprüfen in Doku
-- Konstistente Benennung der Bilder
 - Fehlende Tür zwischen Studi-Raum Gang und Vorlesungsraum-Gang
 - Erklären warum das Beispiel Gebäude D nicht bipartite ist aber bei uns im Code das wichtig ist
 - Türschließen
