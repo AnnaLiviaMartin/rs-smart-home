@@ -1,8 +1,3 @@
-//  bitte alte Dateien löschen + thm-Datei für Ansehen bereitstellen 
-// insgesamt fände ich es eine gute Idee mit den Überschriften das einheitlich zu machen, also alle gleiche Art und Beschreibung was die machen (so wie bei ###### axiome ), sodass man eine übersicht durch die dateistruktur selbst schon hat
-// bitte ebenfalls alles englische auf deutsch machen
-// und code löschen, der nicht mehr benötigt wird bzw. erklären warum er auskommentiert ist
-
 abstract sig Bool {}
 one sig True, False extends Bool {}
 
@@ -25,7 +20,7 @@ sig RAUM extends ORT {}{
 }
 
 sig GARTEN extends RAUM{}{
-	one nachbarn //Garten soll nur einen Zugang zum Haus haben
+	one nachbarn
 }
 
 sig TUER extends ORT{
@@ -163,9 +158,7 @@ fact show {
 	always schrittSehrFein 
 }
 
-//run show for exactly 2 PERSON, 1 GAST, 1 BEWOHNER, exactly 1 GARTEN, exactly 3 TUER, exactly 4 RAUM
-// bitte nur ein run show von beidem oder erklären warum beide nötig sind
-//run show
+run {} for exactly 2 PERSON, 1 GAST, 1 BEWOHNER, exactly 1 GARTEN, exactly 3 TUER, exactly 4 RAUM
 
 //################ Stutter ######################
 
@@ -188,9 +181,10 @@ assert personNurInEinemOrt {
 
 assert geschlosseneTuerIstLeer {
 	always all t: TUER |
-		t.offen = False implies no t.personenImOrtFein
+		t.offen = False implies no t.personenImOrtFein and no t.personenImOrtGrob
 }
 
+//Es darf nur eine offene Tür betreten werden
 assert bewegungDurchOffeneTuer {
 	always all p: PERSON, t: TUER |
 		p in t.personenImOrtFein implies t.offen = True
@@ -200,7 +194,7 @@ assert keineTeleportation_GROB {
 	always all p: PERSON, von, nach: ORT | 
 		(p in von.personenImOrtGrob and 
 		p in nach.personenImOrtGrob' implies 
-		(nach in von.nachbarn.nachbarn)) 
+		(nach in von.nachbarn.nachbarn)) or (p in von.personenImOrtGrob and p in von.personenImOrtGrob')
 }
 
 assert keineTeleportation_FEIN {
@@ -218,23 +212,30 @@ assert personenImGrobmodellNurInRaeumen{
 	always all t: TUER | no t.personenImOrtGrob
 }
 
+//Prüft allgemeine Gleichheit des Groben und Feinen Modells
 assert gleichesErgebnisInFreinUndGrob{
 	always all p: PERSON, von: ORT |
-		(p in von.personenImOrtGrob and p in von.personenImOrtFein) implies 
-		(p in von.personenImOrtGrob' and p in von.personenImOrtFein') or 
-		(p in von.personenImOrtGrob' and p in von.nachbarn.personenImOrtFein') or 
-		(p in von.nachbarn.nachbarn.personenImOrtGrob' and p in von.nachbarn.nachbarn.personenImOrtFein')
+		(p in von.personenImOrtGrob and p in von.personenImOrtFein) implies //Beide Personen befinden sich im Raum
+		(p in von.personenImOrtGrob' and p in von.personenImOrtFein') or // Personen bleiben im selben Raum
+		(p in von.personenImOrtGrob' and p in von.nachbarn.personenImOrtFein') or //hat im feinen Modell eine Tür betreten, bleibt im Groben Modell im Raum
+		(p in von.nachbarn.nachbarn.personenImOrtGrob' and p in von.nachbarn.nachbarn.personenImOrtFein')// beide haben den Nachbarraum Betreten
 }
 
-assert verfeinerungKorrekt { // eventuell entfernen wenn andere assert funktioniert
-	always all p: PERSON, r1, r2: RAUM | //Hier gabe es die verbesserung, dass es nur einen Garten geben darf, da dies dre Anfangsraum für alle ist, die Personen aber auf diese zwei gärten initial unglecih aufgeteilt waren.
+// Prüfen, dass wenn sich eine Person von r1 nach r2 im Feinen Modell bewegt, dass das gleiche auch im Groben Modell funktioniert
+assert verfeinerungKorrekt { 
+	always all p: PERSON, r1, r2: RAUM |
 		(p in r1.personenImOrtFein and p in r2.personenImOrtFein')
 		implies (p in r1.personenImOrtGrob' and p in r2.personenImOrtGrob')
 }
 
+//Personen die sich im Feinen Modell in einem Raum befinden, befinden sich im Groben Modell immer im selben Raum
 assert verfeinerungGrobUndFein {
 	always all p: PERSON, r: RAUM |
 		p in r.personenImOrtFein implies p in r.personenImOrtGrob
+}
+
+assert esBefindetSichImmerNurEinePersonInTuer{
+	always all t: TUER | #t.personenImOrtFein <= 1
 }
 
 assert nurBewohnerKannTuerOeffnen {
@@ -254,16 +255,13 @@ assert tuerStrukturBleibtGleich {
 		t.nachbarn' = t.nachbarn
 }
 
+// Soll Gegenbeispiel liefern, weil Türen zufallen sollen
 assert alleTuerenSindImmerOffen {
 	always all t: TUER | t.offen = True
 }
 
-assert tuerIstGeschlossenBisBewohnerSieOeffnet { //evt was mit unitl ausprobieren
-
-}
-
 check personNurInEinemOrt for 4
-check geschlosseneTuerIstLeer for 4 // Bruahct man das, wenn es bereits als axiom definiert ist?
+check geschlosseneTuerIstLeer for 4 
 check bewegungDurchOffeneTuer for 4
 check keineTeleportation_GROB for 4
 check personenImGrobmodellNurInRaeumen for 4
@@ -272,11 +270,7 @@ check personIstNieInTuer_GROB for 4
 check gleichesErgebnisInFreinUndGrob for 4
 check verfeinerungGrobUndFein for 4
 check nurBewohnerKannTuerOeffnen for 4
+check esBefindetSichImmerNurEinePersonInTuer for 4
 check raumStrukturBleibtGleich for 4
 check tuerStrukturBleibtGleich for 4
 check alleTuerenSindImmerOffen for 4
-
-// ToDo : Checken, warum kein newConfic möglich ist ; Türen gehen manchmal automatisch wieder auf ohne autentifizierung ; PersonenGrob können noch in den Türen Spawnen
-
-//Eigenschaften, die nicht als axiome gelten haben wir über Frame Vorgänge gehandelt, da diese nicht als natürliche Gesetze gelten, beispielsweise das eine PersonGrob nicht in einer Tür stehen kann.
-//Problem: PersonGrob kann noch in Tür spawnen --> Frame Conditions überprüfen und code aufräumen
