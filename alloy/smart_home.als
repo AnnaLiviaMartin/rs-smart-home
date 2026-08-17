@@ -111,29 +111,36 @@ pred stutterGrob{
 //#################### invarianten der Verfeinerung -- alles was im feinen Modell funktioniert, muss auch im groben Modell funktionieren
 
 pred betreteTuer[p: PERSON, von: RAUM, t: TUER]{
+	// pre
 	p in von.personenImOrtFein
 	t in von.nachbarn
 	t.offen in True
 
+	// post
 	von.personenImOrtFein' = von.personenImOrtFein - p
 	t.personenImOrtFein' = t.personenImOrtFein + p
 	p.letzterRaum' = von
 
+	// frame
 	all o: ORT - (von + t) | o.personenImOrtFein' = o.personenImOrtFein
 }
 
 pred verlasseTuer[p: PERSON, nach: RAUM, t: TUER]{
+	// pre
 	p in t.personenImOrtFein
 	nach in t.nachbarn
 	p.letzterRaum != nach
 
+	// post
 	t.personenImOrtFein' = t.personenImOrtFein - p
 	nach.personenImOrtFein' = nach.personenImOrtFein + p
 
+	// frame
 	all o: ORT - (nach + t) | o.personenImOrtFein' = o.personenImOrtFein
 }
 
-pred vorbedingungenMove2 [r1, r2: RAUM, t: TUER] {
+// TODO: Hieß mal vorbedingungmove2 -> doof
+pred pre_move2 [r1, r2: RAUM, t: TUER] {
 	r1 != r2
 	r1 in t.nachbarn
 	r2 in t.nachbarn
@@ -146,7 +153,7 @@ pred frameConditions2{
 }
 
 pred move2 {
-	some p: PERSON, r1, r2: RAUM, t: TUER | ((betreteTuer[p, r1, t] and frameConditions2) or (verlasseTuer[p, r2, t] and moveGrob[p, r1, r2])) and vorbedingungenMove2[r1, r2, t]
+	some p: PERSON, r1, r2: RAUM, t: TUER | ((betreteTuer[p, r1, t] and frameConditions2) or (verlasseTuer[p, r2, t] and moveGrob[p, r1, r2])) and pre_move2[r1, r2, t]
 }
 
 // ################# Verfeinerund mit Authentifizierung ###########
@@ -161,17 +168,18 @@ pred anmelden [von: RAUM, tuer: TUER, p: PERSON] {
 	p in BEWOHNER
 	p in von.personenImOrtFein
 	tuer in von.nachbarn
+
 	//post
 	tuer.offen' = True
+
 	//frame
 	all t: TUER - tuer | t.offen' = t.offen
 	//all auth: AUTHENTIFIZIERUNG - tuer.authentifizierung | (auth.~authentifizierung).offen' = (auth.~authentifizierung).offen
 }
 
 pred anmeldungFehlgeschlagen [von: RAUM, tuer: TUER, p: PERSON]{
-	all auth: AUTHENTIFIZIERUNG - tuer.authentifizierung | (auth.~authentifizierung).offen' = (auth.~authentifizierung).offen
-
 	//frame
+	all auth: AUTHENTIFIZIERUNG - tuer.authentifizierung | (auth.~authentifizierung).offen' = (auth.~authentifizierung).offen
 	all t: TUER | t.offen' = t.offen
 }
 
