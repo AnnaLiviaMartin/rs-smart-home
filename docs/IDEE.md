@@ -174,32 +174,34 @@ Bereits aufgelistete Axiome wurden dabei in Alloy als facts definiert, damit die
 
 - Jede Person befindet sich immer genau an einem Ort.
 - Eine Tür verbindet genau zwei Räume.
+- Ein Raum hat nur Türen als Nachbarn.
 - Eine Tür kann geöffnet oder geschlossen sein.
 - Eine Person darf eine Tür nur bei geöffneter Tür passieren.
+- Eine Tür kann nicht gechlossen werden, wenn eine Person in ihr steht
+- Nachbarschaften sind immer symmetrisch
 
 Ebenfalls als facts wurden die Strukturen definiert, die die Struktur des Gebäudes ausmachen:
 
 - alle Räume sind von allen Räumen aus erreichbar und befinden sich entsprechend im gleichen Gebäude
 - es gibt um das Gebäude herum einen einzigen Garten als Außenbereich
-- jeder Nachbarraum eines Raums ist wiederum Nachbar des Nachbarraums
 
 ## Event-B
 
-Es folgt eine Erklärung zur Defintion der Event-B Modelle.
+Die Modellierung des Systems basiert auf Event-B. Dabei haben wir zwischen insgesamt drei Verfeinerungsschritten unterschieden, die jeweils aufeinander aufbauen.
 
 ### Umsetzung des Groben Modells
 
-Um erste Bewegungsabläufe von Personen zwischen Räumen modellieren zu können haben wir zunächst Personen und unterschiedliche Orte als Räume und Gärten definiert. Eine Person kann sich in einem Ort aufhalten.
+Um erste Bewegungsabläufe von Personen zwischen Räumen modellieren zu können, haben wir zunächst Personen und unterschiedliche Orte als Räume und Gärten definiert. Eine Person kann sich in einem Ort aufhalten. Im Groben Modell werden als Aufenthaltsmöglichkeit für Personen nur Räume betrachtet.
 
 ![Grobes Modell mit Bernd in Raum A](pictures/Alloy_Raumplan_Grob_Bernd.png)
 
-Personen können nun zwischen benachbarten Räumen wechseln. Dafür enthält jeder Raum eine Liste aus Nachbarräumen. Wichtig ist, dass Nachbarräume symmetrisch sind, weshalb wir dies als fact in Alloy für unsere Raumstruktur festgelegt haben (siehe Alloymodell: fact alleNachbarnSindSymmerisch).
+Personen können nun zwischen benachbarten Räumen wechseln. Dafür enthält jeder Raum eine Liste aus Nachbarräumen. Wichtig ist, dass Nachbarräume symmetrisch sind, weshalb wir dies als fact in Alloy für unsere Raumstruktur festgelegt haben (siehe Alloymodell: `fact alleNachbarnSindSymmerisch`).
 
-Die Bewegung wurde definiert als das Entfernen der Person aus Raum A und das Hinzufügen dieser in den benachbarten Raum B (siehe Alloymodell: pred move).
+Die Bewegung wurde definiert als das Entfernen der Person aus dem `set personenImOrtGrob` Raum A und das Hinzufügen dieser in das gleichnamige Set vom benachbarten Raum B im nächsten Zustand (siehe Alloymodell: `pred move`).
 
 ![Grobes Modell mit Bernd in Raum B](pictures/Alloy_Raumplan_Grob_Bernd_B.png)
 
-In diesem Schritt ändern sich daher nur die Personen der beiden beteiligten Räume. Für alle anderen Räume wird durch eine Frame-Condition definiert, dass sich die Personen in diesen Räumen nicht ändern.
+In diesem Schritt ändern sich daher nur die Personen der beiden beteiligten Räume. Für alle anderen Räume wird durch eine Frame-Condition definiert, dass sich die Personen in diesen Räumen nicht ändern. Diese Frame-Condition wurde in späteren Verfeinerungsschritten in der `schrittGrob` auskommentiert, da diese durch die feineren Modelle übernommen wurde.
 
 ### Umsetzung des Feinen Modells
 
@@ -208,32 +210,31 @@ Im feinen Modell wurden nun Türen zwischen den Räumen modelliert, durch die di
 1. Die Person betritt die Tür
 2. Die Person verlässt die Tür
 
+In Alloy wurde der Aufenthaltsort der Personen im feinen Modell über das `set personenImOrtFein` repräsentiert.
+
 ![Feines Modell mit Zwischenschritt](pictures/Alloy_Raumplan_Fein_Bernd_Tuer.svg)
 
-Eine eingeführte Voraussetzung ist, dass die Tür, durch die eine Person gehen möchte, geöffnet sein muss. Dies haben wir als pre-Bedingung festgehalten (siehe Alloymodell: pred betreteTuer).
+Wenn eine Person des feinen Modells nun in den benachbarten Raum wechseln möchte, ist es nun notwendig, dass sie einen Zwischenschritt in der Tür macht. Eine eingeführte Voraussetzung ist, dass die Tür, durch die eine Person gehen möchte, geöffnet sein muss. Dies haben wir als pre-Bedingung festgehalten (siehe Alloymodell: `pred betreteTuer`).
 
-Da an dieser Stelle für einen einzelnen Schritt im groben Modell zwei Schritte im feinen Modell notwendig sind. Ist die Einführung eines ersten Stutter-Vorgangs im groben Modell wichtig.
+Da an dieser Stelle für einen einzelnen Schritt im groben Modell nun zwei Schritte im feinen Modell notwendig sind, ist die Einführung eines ersten Stutter-Vorgangs im groben Modell wichtig, um die Personen im groben Modell am selben Ort zu halten und zufällige Zuweisungen durch Alloy zu vermeiden.
 
-Ziel ist, dass das Ergebnis des feinen Modells auch im Ergebnis des groben Modells vorhanden sein soll. Zwischenschritte des feinen Modells sind entsprechend als Blackbox im groben Modell zu betrachten.
-
-|  | Schritt 1 | Schritt 2 |
+| Zustandsübergang | Schritt 1 | Schritt 2 |
 |----------|----------|----------|
-| Grob   | Stutter   | betreteRaum   |
-| Fein   | betreteTuer   | verlasseTuer   |
+| Grob:   | Stutter   | `betreteRaum`   |
+| Fein:   | `betreteTuer`   | verlasseTuer   |
 
 In diesem Stutter-Vorgang ist festgelegt, dass sich die Person im groben Modell nicht bewegt. Dies wurde mit einer Frame-Condition ermöglicht, die definiert, dass sämtliche Personen in dem Modell in ihrem aktuellen Raum bleiben.
 
-Ziel war es, wenn sich eine Person im feinen Modell in Raum A, befindet, dass dies auch für das grobe Modell gilt.
+Ziel ist, dass das Endergebnis des feinen Modells auch im Ergebnis des groben Modells vorhanden sein soll. Zwischenschritte des feinen Modells sind entsprechend als Blackbox im groben Modell zu betrachten. Wenn sich also die Person im feinen Modell in Raum B befindet, muss sie das im groben Modell ebenfalls tun. Ansonsten bleibt die Person im groben Mdoell in Raum A.
 
-Wenn die Person allerdings die Tür verlässt und Raum B betritt, soll das für das grobe Modell ebenfalls gelten.
-
+Wenn die Person allerdings die Tür verlässt(siehe Alloymodell: `verlasseTuer`) und Raum B betritt, soll das für das grobe Modell ebenfalls gelten.
 Wenn die Person im feinen Modell in der Tür steht, ist das aus Sicht des groben Modells betrachtet, eine Blackbox:
 
 ![Modell mit Zwischenschritt der ersten Verfeinerung](pictures/Alloy_Raumplan_Grob_Fein_Tuer.svg)
 
 ### Umsetzung der Authentifizierung
 
-Im zweiten Verfeinerungsschritt, wurde nun die Voraussetzung eingeführt, dass Bewohner sich authentifizieren müssen, um eine Tür zwischen benachbarten Räumen öffnen zu können. Wenn die Tür geöffnet wurde, besteht für Personen wieder die Möglichkeit eines Raumwechsels.
+Im zweiten Verfeinerungsschritt, wurde nun die Voraussetzung eingeführt, dass Bewohner sich authentifizieren müssen, um eine Tür zwischen benachbarten Räumen öffnen zu können (siehe Alloymodell: `pred oeffneTuer`). Wenn die Tür geöffnet wurde, besteht für Personen wieder die Möglichkeit eines Raumwechsels.
 
 Da sich nur Bewohner Authentifizieren können, ist es nun notwendig, Personen in Bewohner und Gäste aufzuteilen. Das Bewegen zwischen Räumen mit einer verschlossenen Tür wird für Gäste also erst möglich, wenn ein Bewohner die Tür vorher aufgeschlossen hat.
 
@@ -243,24 +244,33 @@ Für eine bessere Visualisierung wurde in nachfolgenden Grafiken ein Authentifiz
 
 ### Synchronisierung der Modellebenen
 
-Da das grobe Modell als Blackbox für die verfeinerten Schritte betrachtet werden kann, allerdings die Ergebnisse der feineren Modelle sich im groben Modell widerspiegeln müssen, ist es nun notwendig, die Abläufe der Verfeinerungsgrade zu synchronisieren. Dabei wird für jede neu hinzugefügten Verfeinerungsschritt ein Stutter-Vorgang im darunterliegenden Modell eingeführt.
+Da die feineren Modellierungsschritte als Blackbox für das grobe Modell betrachtet werden können, allerdings die Ergebnisse der feineren Modelle sich im groben Modell widerspiegeln müssen, ist es nun notwendig, die Abläufe der Verfeinerungen zu synchronisieren. Dabei wird für jede neu hinzugefügten Verfeinerungsschritt ein Stutter-Vorgang im darunterliegenden Modell eingeführt.
 
-Betrachtet man beispielsweise den ersten Schritt der Autorisierung, darf Alloy in keinem der Modelle Änderungen der Invarianten vornehmen, ausgenommen, dass sich die Verbindungstür der Nachbarräume öffnet. Im Stutter des ersten Schritts auf allen Modell-Ebenen dürfen entsprechend die Personen des Groben und feinen Modells, die Variable des letzten Raumes der Personen und die restlichen Türen nicht verändert werden (siehe Alloymodell: StutterSchritt_1).
+Betrachtet man beispielsweise den ersten Schritt der Autorisierung, darf Alloy in keinem der Modelle Änderungen der Invarianten vornehmen, ausgenommen, dass sich die Verbindungstür der Nachbarräume öffnet. Im Stutter des ersten Schritts auf allen Modell-Ebenen dürfen entsprechend die Personen des Groben und feinen Modells und die restlichen Türen nicht verändert werden (siehe Alloymodell: `StutterSchritt_1`).
 
 Insgesamt ergibt sich folgende Tabelle der Modell-Vorgänge:
 
-|  | Schritt 1 | Schritt 2 | Schritt 3 |
+| Zustandsübergang | Schritt 1 | Schritt 2 | Schritt 3 |
 |----------|----------|----------|----------|
-| Grob   | Stutter   | Stutter   | betreteRaum |
-| Fein   | Stutter   | betreteTuer   | verlasseTuer |
-| Auth   | Tuer oeffnen   | betreteTuer   | verlasseTuer |
-| Stutter| Stutter_1    | Stutter_2    |      |
+| Grob:   | -   | -   | betreteRaum |
+| Fein:   | -   | betreteTuer   | verlasseTuer |
+| Auth:   | Tuer oeffnen   | betreteTuer   | verlasseTuer |
+| Stutter:| Stutter_1    | Stutter_2    |      |
 
 Gleiche Modell-Vorgänge grafisch visualisiert:
 
 ![Synchronisierung der Verfeinerungsschritte](pictures/Alloy_Raumplan_Synchronisierung.svg)
 
-Da das Modell immer nur Schritte einzelner Personen ausführt und auch beim Türenöffnen immer nur ein Objekt explizit angesprochen wird, ist es nun notwendig, Alloy durch Frame Contitions daran zu hindern, weitere, nicht explizit definierte Schritte im Modell auszuführen. Das wird in den einzelnen Zustandsübergängen durch Frame-Conditions ermöglicht, die die Änderung restlicher gleicher Objekte untersagt (siehe Alloy-Modell: betreteTuer, verlasseTuer). Dabei reichen die Frame-Conditions in den feineren Ebenen aus, da diese auch automatisch für das Grobe modell gelten.
+Da das Modell immer nur Schritte einzelner Personen ausführt und auch beim Türenöffnen immer nur ein Objekt explizit angesprochen wird, ist es nun notwendig, Alloy durch Frame Contitions daran zu hindern, weitere, nicht explizit definierte Schritte im Modell auszuführen. Das wird in den einzelnen Zustandsübergängen durch Frame-Conditions ermöglicht, die die Änderung restlicher gleicher Objekte untersagt (siehe Alloy-Modell: `betreteTuer`, `verlasseTuer`). Dabei reichen die Frame-Conditions in den feineren Ebenen aus, da diese auch automatisch für das Grobe modell gelten.
+
+Die Frame-Conditions werden entsprechend nicht pro Schritt, sondern pro Zustandsübergang ausgeführt:
+
+| Zustandsübergang | Schritt 1 | Schritt 2 | Schritt 3 | Frame |
+|----------|----------|----------|----------|----------|
+| Grob:   | -   | -   | betreteRaum | personenGrob |
+| Fein:   | -   | betreteTuer   | verlasseTuer | personenFein |
+| Auth:   | Tuer oeffnen   | betreteTuer   | verlasseTuer | Türen |
+| Stutter:| Stutter_1, personenGrob    | Stutter_2, personenGrob u. personenFein    |   türen   | |
 
 ## Zusammengefasste Ablaufschritte der zweiten Verfeinerung
 

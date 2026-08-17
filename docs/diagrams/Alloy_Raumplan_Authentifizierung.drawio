@@ -1,6 +1,6 @@
 <mxfile host="Electron">
   <diagram name="Seite-1" id="ZWcmfWcrKyR64C1zsMKy">
-    <mxGraphModel dx="1174" dy="691" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="2054" dy="1209" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -10,7 +10,7 @@
         <mxCell id="3dOnCPDYyRVfqjN7cVse-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#CCFFCC;strokeColor=default;" value="&lt;u&gt;Raum A&lt;/u&gt;" vertex="1">
           <mxGeometry height="90" width="160" x="128" y="350" as="geometry" />
         </mxCell>
-        <mxCell id="3dOnCPDYyRVfqjN7cVse-11" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#36393d;" value="&lt;u&gt;Tuer&lt;/u&gt;" vertex="1">
+        <mxCell id="3dOnCPDYyRVfqjN7cVse-11" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#36393d;" value="&lt;u&gt;Tuer&lt;/u&gt;&lt;div&gt;geschlossen&lt;/div&gt;" vertex="1">
           <mxGeometry height="70" width="70" x="379" y="360" as="geometry" />
         </mxCell>
         <mxCell id="yu2ZaLqeM3amGkxNUJce-40" edge="1" parent="1" source="3dOnCPDYyRVfqjN7cVse-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="yu2ZaLqeM3amGkxNUJce-35">
