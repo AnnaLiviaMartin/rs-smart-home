@@ -302,29 +302,113 @@ stop
 
 # Beweisen mit Lean
 
-Lean wird für mathematische Beweise verwendet.
+Lean wird für mathematische Beweise verwendet. Wir haben dabei im ersten Schritt zuerst Alloy spezifiziert (siehe [Alloy](#modellierung-in-alloy)) und dann aus den dort spezifizierten Objekten und Bedingungen (pre-/post-/frame-Bedingungen) Lean abgeleitet. Um die Spezifizierung hier genauer Beschreiben zu können, wird sie folgend in die Umsetzung der Objekte und der Beweise unterteilt.
 
-In Lean werden insbesondere folgende Eigenschaften betrachtet:
+Besonders herausfordernd war hierbei, dass wir komplexe Objekte für unsere Event-B-Beweise nutzen mussten und bisher wenig Erfahrung beim Beweisen mit komplexen Objekten hatten.
 
-- Die Invarianten bleiben nach einer Bewegung erhalten.
-- Eine Person befindet sich nach einer Bewegung weiterhin genau an einem Ort.
-- Eine Tür verbindet weiterhin genau zwei Räume.
-- Eine fehlgeschlagene Authentifizierung verändert den Zustand nicht.
-- Die Verfeinerung liefert dasselbe fachliche Ergebnis wie das grobe Modell.
+## Abbildung der Objekte aus Alloy nach Lean
 
-## Lean-Modelle
+Durch Alloy war bereits das Konstrukt der Objekte vorgegeben. Dieses wollten wir so ähnlich wie möglich übernehmen. Problematisch war dabei, dass in Lean keine `var` Variablen (mit zeitlichen Veränderungsmöglichkeiten) modelliert werden können. Ebenso ist es in Lean nicht möglich mit "einfachen" Datentypen einen Graphen zu erstellen, welchen wir für die Modellierung der Räume/des Gebäudes benötigt hätten.
 
-Dieses Kapitel beschreibt, wie Lean verwendet wird.
+Wir haben uns daher entschieden bei unseren Objekten in zwei Kategorien zu unterscheiden:
+- Objekte, die eine statische Struktur wiederspiegeln
+- und Objekte, die zeitabhängig sind und ihren Inhalt verändern können.
 
-### Abbildung der Objekte aus Alloy nach Lean
+Teil der statischen Struktur sind damit alle Räume und Türen, da diese ihren Standort nicht ändern. Teil der zeitabhängigen Inhalte sind alle Objekte, deren Inhalte sich verändern, z.b. die Belegung der Räume, der letzte Raum der Personen und ob eine Tür gerade offen oder geschlossen ist.
 
-### Definition von Zuständen
+### Umsetzung der statischen Struktur
+
+Die statische Struktur haben wir über das Lean-Interface SimpleGraph umgesetzt.
+
+- erklären warum bipartite
+- erklären warum extra eigenschaften darin bewiesen -> geht nicht über definition von einzelnen axiomen + so sicherstellen dass man nur echte objekte erstellen kann für beispiel
+- nutzung von Abkürzungen für gemeinsame Datentypen: OrtSet, TuerSet, RaumSet -> so später automatisch Typen festlegbar
+- durch solche definition wurden automatisch bereits einige dinge gegeben: Gebaeudeplan, der bipartite ist, nachbar-symmetrie gegeben, damit auch tuerVerbindetZweiRaeume, alleNachbarnSindSymmerisch inkl. Axiome; 
+- Invarianten, die bereits implizit definiert sind: Jede Tuer besitzt genau eine Authentifizierung. Durch Tuer.tuer (auth : Authentifizierung) bereits garantiert. offen besitzt genau einen Bool-Wert. Durch offen : OrtSet orte → Bool bereits garantiert. letzterRaum ist entweder ein Raum oder nicht gesetzt. Durch letzterRaum : Person → Option Raum bereits garantiert. Jede Person ist Bewohner:in oder Gast. Durch den induktiven Datentyp Person bereits garantiert. Raeume und Tueren sind getrennte Ort-Konstruktoren. Durch Ort.Raum und Ort.Tuer bereits garantiert. Die Nachbarschaftssymmetrie und die Schleifenfreiheit sind bei SimpleGraph ebenfalls bereits Bestandteile der Struktur. Tueren verbinden jeweils zwei Raeume. Raeume koennen nicht mit anderen Raeumen direkt verbunden sein.
+- Erklären warum das Beispiel Gebäude D nicht bipartite ist aber bei uns im Code das wichtig ist für Lean
+
+### Umsetzung der veränderlichen Struktur (Zuständen) 
+
+- mit Zustand struktur -> alternativ hättem man das ganze auch ohne Struktur Zustand machen können und dann nur über Listen statt dass die LIsten in einem übergeordneten Typen sind. So kann man aber mit der Struktur einfacher sicherstellen dass bestimmte Grundeigenschaften immer bestehen bleiben beim anlegen und keine inkorrekten Zustände anlegbar sind -> das verschiebt die legitimität der eigenschaften dann zur Veränderung. so muss nur noch beim verändern sichergestellt werden dass die zustände korrekt definiert bleiben
+- erklären warum extra eigenschaften darin bewiesen -> geht nicht über definition von einzelnen axiomen + so sicherstellen dass man nur echte objekte erstellen kann für beispiel
+- nutzung von Abkürzungen für gemeinsame Datentypen: OrtSet, TuerSet, RaumSet -> so später automatisch Typen festlegbar
+- Umsetzung: erklären warum wir in Lean Zustand verwendet haben/ warum wir nicht mit Zustand beweisen, Tür zufallen erklären warum und wie umgesetzt, erklären warum SimpleGraph verwendet
+
+## Beweise
+
+Nach der Definition der Objekte mit ihren Eigenschaften konnten wir dann Beweise schreiben. Die Beweise orientieren sich an den Definitionen von Alloy mit den pre-/post- und frame-Bedingungen. 
+
+Es gibt dabei zwei Abstaktionsebenen:
+1. Beweise direkt über die Listen
+2. Beweise über den Zustand, verbindend aller pre-/post-Bedingungen
+
+In Lean werden daher insbesondere folgende Eigenschaften betrachtet:
+
+- Die Frame-Bedingungen und Grundannahmen bleiben nach einer Bewegung erhalten.
+- Pre- und Post-Bedingungen umschließen eine Aktion.
+- Eine ausgeführte Aktion führt nicht zu inkonsistenten Zuständen.
+
+Diese Eigenschaften wurden dann über die zwei Abstraktionsebenen sichergestellt. Es gibt dabei immer eine Aktionsmethode, welche die eigentliche Aktion ausführen (bspw. das Entfernen einer Person A aus einem Raum X). Um diese Aktion herum sind dann die pre-/post- und frame-Bedingungen geschachtelt
 
 ### Definition von Übergängen
 
-### Formulierung der Invarianten
+- wie wir die einzelnen pre-post- etc. in eine methode zusammengepackt haben -> konsistenz sicherstellen
 
-### Beweis ausgewählter Eigenschaften
+### Formulierung der Invarianten und Axiome
+
+- erklären warum hier nicht axiom verwendet wird als schlüsselwort etc.
+
+### Umgesetzte Beweise
+
+Die in Lean umgesetzten Beweise umfassen:
+
+**Statische Struktur**
+- Räume und Türen sind disjunkt.
+- Nur Raum–Tür-Kanten sind erlaubt.
+- Nachbarschaft ist symmetrisch.
+- Graph ist schleifenfrei.
+- Genau ein Garten existiert.
+- Der Garten hat genau eine Tür.
+- Jede Tür verbindet genau zwei Räume.
+
+**Zustand**
+- Jede betrachtete Person befindet sich im groben Modell genau einmal.
+- Jede betrachtete Person befindet sich im feinen Modell genau einmal.
+- Keine Person befindet sich grob in einer Tür.
+- Nur bekannte Personen kommen in den Belegungen vor.
+- Eine belegte feine Tür ist offen.
+- Die feine Belegung verfeinert die grobe Belegung.
+- Die Verfeinerungsrelation bleibt erhalten.
+
+**Grobe Bewegung**
+- Person verlässt den Ausgangsraum.
+- Person kommt im Zielraum an.
+- Andere Personen bleiben unverändert. 
+- Die Personen im von Raum bleiben unverändert bis auf p. 
+- Nach Bewegung enthält Zielort vorherige Personen + p.
+- Türen und Graph bleiben unverändert.
+- Es gibt eine offene Tür die die zwei Räume miteinander verbindet.
+- Keine grobe Bewegung in/über eine Tür.
+- Der Öffnungsstatus der Tür zwischen den zwei Räumen verändert sich nicht.
+- Keine grobe Bewegung in eine Tür. -> durch Typen sichergestellt
+
+**Feine Bewegung**
+- Person kann eine offene Tür betreten.
+- Person befindet sich danach in der Tür.
+- Grobes Modell bleibt beim Betreten unverändert.
+- Person kann die Tür in den Zielraum verlassen.
+- Person befindet sich danach im Zielraum.
+- Der grobe Schritt stimmt mit dem Ergebnis des feinen Schritts überein.
+- Andere Personen bleiben unverändert.
+- letzterRaum wird korrekt aktualisiert. -> erst nach verlasseTuer ist der letzteRaum neu gesetzt worden, nicht schon bei betreteTuer
+- Die Verfeinerungsrelation bleibt nach Aktionen erhalten.
+
+**Türöffnung**
+- Nur Bewohner:innen dürfen Türen öffnen.
+- Die Person muss an die Tür angrenzen.
+- Eine geschlossene Tür wird geöffnet.
+- Andere Öffnungszustände bleiben unverändert.
+- Belegungen bleiben unverändert.
 
 # Vergleich von Alloy und Lean
 
