@@ -1,4 +1,4 @@
-- Fehlende Tür zwischen Studi-Raum Gang und Vorlesungsraum-Gang
+- 
 - Erklären warum das Beispiel Gebäude D nicht bipartite ist aber bei uns im Code das wichtig ist
 - Türschließen
 - Alles soll sich gleich formuliert anhören, Stil ist aktuell sprachlich noch anders
