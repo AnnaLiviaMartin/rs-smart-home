@@ -43,7 +43,7 @@ Behandelt werden unter anderem:
 
 ### Umsetzungsentscheidungen
 
-Die Beschreibung der konkreten Modellierungs- und Implementierungsentscheidungen befindet sich in [Umsetzung.md](docs/Umsetzung.md)
+Die Beschreibung der konkreten Modellierungs- und Implementierungsentscheidungen befindet sich in [Idee.md](docs/Idee.md)
 
 Dort wird erklärt, wie die fachlichen Anforderungen in Alloy und Lean umgesetzt wurden.
 
