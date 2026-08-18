@@ -127,12 +127,6 @@ def initialOffen : TuerSet meineOrte → Bool
   | ⟨Tuer.tuer 1, _⟩ => false
   | ⟨Tuer.tuer 2, _⟩ => false
 
-def initialLetzterRaum : Person → Option Raum
-  | Person.Bewohner 1 => some (Raum.Zimmer 1)
-  | Person.Gast 2     => some (Raum.Zimmer 1)
-  | Person.Gast 3     => some (Raum.Zimmer 2)
-  | _                 => none
-
 -- Hilfslemma
 lemma initialBelegung_personen (o : OrtSet meineOrte) :
     personenImOrt initialBelegung o ⊆ meinePersonen := by
@@ -155,7 +149,6 @@ def initialZustand : Zustand meineOrte meinePersonen where
   belegungGrob := initialBelegung
   belegungFein := initialBelegung
   offen := initialOffen
-  letzterRaum := initialLetzterRaum
 
   grob_einePersonGenauEinOrt := by
     rintro ⟨p, hp⟩
@@ -198,30 +191,6 @@ def initialZustand : Zustand meineOrte meinePersonen where
   verfeinerung := by
     intro p r _ hpFein
     exact hpFein
-
-  tuerVerfeinerung := by
-    intro p t hpInTuer
-    let o1 : OrtSet meineOrte := ⟨room1, by simp [meineOrte]⟩
-    let o2 : OrtSet meineOrte := ⟨room2, by simp [meineOrte]⟩
-    have ht1 : tuerAlsOrt t ≠ o1 := by
-      intro h
-      have hval : (tuerAlsOrt t).val = o1.val := congrArg Subtype.val h
-      simp [tuerAlsOrt, o1, room1] at hval
-    have ht2 : tuerAlsOrt t ≠ o2 := by
-      intro h
-      have hval : (tuerAlsOrt t).val = o2.val := congrArg Subtype.val h
-      simp [tuerAlsOrt, o2, room2] at hval
-    have hLeer : personenImOrt initialBelegung (tuerAlsOrt t) = ∅ := by
-      simp [
-        personenImOrt,
-        initialBelegung,
-        o1,
-        o2,
-        ht1,
-        ht2
-      ]
-    rw [hLeer] at hpInTuer
-    simp at hpInTuer
 
   grobeTuerenSindImmerLeer := by
     intro t
