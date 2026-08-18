@@ -132,7 +132,7 @@ pred schrittFein {
 
 pred schrittSehrFein {
 	some p: PERSON, t: TUER |
-		(oeffneTuer[p, t] and StutterSchritt_1[t]) or (schrittFein and tuerBleibtOffenOderFaelltZu)	
+		(oeffneTuer[p, t] and StutterSchritt_1) or (schrittFein and tuerBleibtOffenOderFaelltZu)	
 }
 
 pred oeffneTuer [p: PERSON, tuer: TUER] {
@@ -143,10 +143,7 @@ pred oeffneTuer [p: PERSON, tuer: TUER] {
 
 	//post
 	tuer.offen' = True
-}
-
-pred tuerBleibtOffenOderFaelltZu {
-	all t: TUER | t.offen = False implies t.offen' = False 
+	all t: TUER - tuer | t.offen = False implies t.offen' = False 
 }
 
 fact show {
@@ -158,14 +155,17 @@ run {} for exactly 2 PERSON, 1 GAST, 1 BEWOHNER, exactly 1 GARTEN, exactly 3 TUE
 
 //################ Stutter ######################
 
-pred StutterSchritt_1 [tuer: TUER] {
+pred StutterSchritt_1 {
 	all o: ORT | o.personenImOrtFein' = o.personenImOrtFein
 	all o: ORT | o.personenImOrtGrob' = o.personenImOrtGrob
-	all t: TUER - tuer | t.offen' = t.offen
 }
 
 pred StutterSchritt_2{
 	all o: ORT | o.personenImOrtGrob' = o.personenImOrtGrob
+}
+
+pred tuerBleibtOffenOderFaelltZu {
+	all t: TUER | t.offen = False implies t.offen' = False 
 }
 
 //################ Tests ######################
@@ -256,17 +256,17 @@ assert alleTuerenSindImmerOffen {
 	always all t: TUER | t.offen = True
 }
 
-check personNurInEinemOrt for 4
-check geschlosseneTuerIstLeer for 4 
-check bewegungDurchOffeneTuer for 4
-check keineTeleportation_GROB for 4
-check personenImGrobmodellNurInRaeumen for 4
-check keineTeleportation_FEIN for 4
-check personIstNieInTuer_GROB for 4
-check gleichesErgebnisInFreinUndGrob for 4
-check verfeinerungGrobUndFein for 4
-check nurBewohnerKannTuerOeffnen for 4
-check esBefindetSichImmerNurEinePersonInTuer for 4
-check raumStrukturBleibtGleich for 4
-check tuerStrukturBleibtGleich for 4
-check alleTuerenSindImmerOffen for 4
+check personNurInEinemOrt for 5
+check geschlosseneTuerIstLeer for 5
+check bewegungDurchOffeneTuer for 5
+check keineTeleportation_GROB for 5
+check personenImGrobmodellNurInRaeumen for 5
+check keineTeleportation_FEIN for 5
+check personIstNieInTuer_GROB for 5
+check gleichesErgebnisInFreinUndGrob for 5
+check verfeinerungGrobUndFein for 5
+check nurBewohnerKannTuerOeffnen for 5
+check esBefindetSichImmerNurEinePersonInTuer for 5
+check raumStrukturBleibtGleich for 5
+check tuerStrukturBleibtGleich for 5
+check alleTuerenSindImmerOffen for 5
