@@ -225,9 +225,9 @@ Da an dieser Stelle für einen einzelnen Schritt im groben Modell nun zwei Schri
 
 In diesem Stutter-Vorgang ist festgelegt, dass sich die Person im groben Modell nicht bewegt. Dies wurde mit einer Frame-Condition ermöglicht, die definiert, dass sämtliche Personen in dem Modell in ihrem aktuellen Raum bleiben.
 
-Ziel ist, dass das Endergebnis des feinen Modells auch im Ergebnis des groben Modells vorhanden sein soll. Zwischenschritte des feinen Modells sind entsprechend als Blackbox im groben Modell zu betrachten. Wenn sich also die Person im feinen Modell in Raum B befindet, muss sie das im groben Modell ebenfalls tun. Ansonsten bleibt die Person im groben Mdoell in Raum A.
+Ziel ist, dass das Endergebnis des feinen Modells auch im Ergebnis des groben Modells vorhanden sein soll. Zwischenschritte des feinen Modells sind entsprechend als Blackbox im groben Modell zu betrachten. Wenn sich also die Person im feinen Modell in Raum B befindet, muss sie das im groben Modell ebenfalls tun. Ansonsten bleibt die Person im groben Modell in Raum A.
 
-Wenn die Person allerdings die Tür verlässt(siehe Alloymodell: `verlasseTuer`) und Raum B betritt, soll das für das grobe Modell ebenfalls gelten.
+Wenn die Person allerdings die Tür verlässt (siehe Alloymodell: `verlasseTuer`) und Raum B betritt, soll das für das grobe Modell ebenfalls gelten.
 Wenn die Person im feinen Modell in der Tür steht, ist das aus Sicht des groben Modells betrachtet, eine Blackbox:
 
 ![Modell mit Zwischenschritt der ersten Verfeinerung](pictures/Alloy_Raumplan_Grob_Fein_Tuer.svg)
