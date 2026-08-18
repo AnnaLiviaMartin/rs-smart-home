@@ -244,11 +244,16 @@ Für eine bessere Visualisierung wurde in nachfolgenden Grafiken ein Authentifiz
 
 ### Synchronisierung der Modellebenen
 
-Da die feineren Modellierungsschritte als Blackbox für das grobe Modell betrachtet werden können, allerdings die Ergebnisse der feineren Modelle sich im groben Modell widerspiegeln müssen, ist es nun notwendig, die Abläufe der Verfeinerungen zu synchronisieren. Dabei wird für jede neu hinzugefügten Verfeinerungsschritt ein Stutter-Vorgang im darunterliegenden Modell eingeführt.
+Da die feineren Modellierungsschritte als Blackbox für das grobe Modell betrachtet werden können, allerdings die Ergebnisse der feineren Modelle sich im groben Modell widerspiegeln müssen, ist es nun notwendig, die Abläufe der Verfeinerungen zu synchronisieren. Dabei wird für jede neu hinzugefügten Verfeinerungsschritt ein Stutter-Vorgang eingeführt, der vom verfeinerten Modell aufgeführt wird. Dadurch können Stutter-Vorgänge der gröberen Modelle entfernt und an die nächsthöhere Ebene ausgelagert werden.
 
-Betrachtet man beispielsweise den ersten Schritt der Autorisierung, darf Alloy in keinem der Modelle Änderungen der Invarianten vornehmen, ausgenommen, dass sich die Verbindungstür der Nachbarräume öffnet. Im Stutter des ersten Schritts auf allen Modell-Ebenen dürfen entsprechend die Personen des Groben und feinen Modells und die restlichen Türen nicht verändert werden (siehe Alloymodell: `StutterSchritt_1`).
+***Stutter-Vorgänge:***
 
-Insgesamt ergibt sich folgende Tabelle der Modell-Vorgänge:
+Betrachtet man beispielsweise den ersten Schritt der Autorisierung, darf Alloy in keinem der Modelle Änderungen der Objekte vornehmen, ausgenommen, dass sich die Verbindungstür des Nachbarraums öffnet. Entsprechend wird von `tuerOeffnen` der `Stutter_Schritt_1` ausgeführt, damit sich auf allen Modell-Ebenen die Personen des Feinen und des groben Modells nicht ändern (siehe Tabelle).
+
+Gleiches Gilt für den zweiten Schritt der Modelle. Es dürfen nur die Personen des feinen Modells sich bewegen, weshalb beim `Stutter_Schritt_2` nur die Personen des groben Modells gleich bleiben (siehe Tabelle).
+
+<!-- 
+Insgesamt ergibt sich folgende Tabelle der Modell-Vorgänge mit den Stutter Vorgängen bzgl. Personen des Groben und Feinen Modells: -->
 
 | Zustandsübergang | Schritt 1 | Schritt 2 | Schritt 3 |
 |----------|----------|----------|----------|
@@ -257,20 +262,50 @@ Insgesamt ergibt sich folgende Tabelle der Modell-Vorgänge:
 | Auth:   | Tuer oeffnen   | betreteTuer   | verlasseTuer |
 | Stutter:| Stutter_1    | Stutter_2    |      |
 
+Stutter_1:
+```alloy
+pred Stutter_Schritt_1 {
+	all o: ORT | o.personenImOrtFein' = o.personenImOrtFein
+	all o: ORT | o.personenImOrtGrob' = o.personenImOrtGrob
+}
+```
+Stutter_2:
+```alloy
+pred Stutter_Schritt_2 {
+	all o: ORT | o.personenImOrtGrob' = o.personenImOrtGrob
+}
+```
+
 Gleiche Modell-Vorgänge grafisch visualisiert:
 
 ![Synchronisierung der Verfeinerungsschritte](pictures/Alloy_Raumplan_Synchronisierung.svg)
 
-Da das Modell immer nur Schritte einzelner Personen ausführt und auch beim Türenöffnen immer nur ein Objekt explizit angesprochen wird, ist es nun notwendig, Alloy durch Frame Contitions daran zu hindern, weitere, nicht explizit definierte Schritte im Modell auszuführen. Das wird in den einzelnen Zustandsübergängen durch Frame-Conditions ermöglicht, die die Änderung restlicher gleicher Objekte untersagt (siehe Alloy-Modell: `betreteTuer`, `verlasseTuer`). Dabei reichen die Frame-Conditions in den feineren Ebenen aus, da diese auch automatisch für das Grobe modell gelten.
+***Frame-Conditions:***
+
+Da das Modell allerdings immer nur Schritte einzelner Personen ausführt und auch beim Türenöffnen immer nur ein Objekt explizit angesprochen wird, ist es nun notwendig, Alloy durch Frame Contitions daran zu hindern, weitere, nicht explizit definierte Schritte im Modell auszuführen. Das wird in den einzelnen Zustandsübergängen durch Frame-Conditions ermöglicht, die die Änderung restlicher gleicher Objekte untersagt (siehe Alloy-Modell: `betreteTuer`, `verlasseTuer`). Dabei reichen die Frame-Conditions in den feineren Ebenen aus, da diese auch automatisch für das grobe Modell gelten.
 
 Die Frame-Conditions werden entsprechend nicht pro Schritt, sondern pro Zustandsübergang ausgeführt:
 
 | Zustandsübergang | Schritt 1 | Schritt 2 | Schritt 3 | Frame |
 |----------|----------|----------|----------|----------|
-| Grob:   | -   | -   | betreteRaum | personenGrob |
-| Fein:   | -   | betreteTuer   | verlasseTuer | personenFein |
-| Auth:   | Tuer oeffnen   | betreteTuer   | verlasseTuer | Türen |
-| Stutter:| Stutter_1, personenGrob    | Stutter_2, personenGrob u. personenFein    |   türen   | |
+| Grob:   | -   | -   | betreteRaum | personenGrobFrame |
+| Fein:   | -   | betreteTuer   | verlasseTuer | personenFeinFrame, tuerFrame |
+| Auth:   | Tuer oeffnen   | -   | - | tuerFrame |
+| Stutter:| Stutter_1  | Stutter_2    |   tuerFaelltZu   | |
+
+personenGrobFrame:
+```alloy
+all o: ORT - (von + nach) | o.personenImOrtGrob' = o.personenImOrtGrob
+```
+personenFeinFrame:
+```alloy
+all o: ORT - (von + t) | o.personenImOrtFein' = o.personenImOrtFein
+```
+tuerFrame:
+```alloy
+all t: TUER - tuer | t.offen = False implies t.offen' = False 
+```
+
 
 ## Zusammengefasste Ablaufschritte der zweiten Verfeinerung
 
