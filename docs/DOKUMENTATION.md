@@ -242,6 +242,8 @@ Für eine bessere Visualisierung wurde in nachfolgenden Grafiken ein Authentifiz
 
 ![Modell mit Authentifizierung der zweiten Verfeinerung](pictures/Alloy_Raumplan_Authentifizierung.svg)
 
+Hier könnte das Modell durch zusätzliche Verfeinerungsschritte ausgebaut werden. Beispielsweise eine Anmeldung des Bewohners am Authentifizierungsgerät, das Eintragen in ein zentrales System, dass die Person authentifiziert und das anschließende Öffnen der Tür.
+
 ### Synchronisierung der Modellebenen
 
 Da die feineren Modellierungsschritte als Blackbox für das grobe Modell betrachtet werden können, allerdings die Ergebnisse der feineren Modelle sich im groben Modell widerspiegeln müssen, ist es nun notwendig, die Abläufe der Verfeinerungen zu synchronisieren. Dabei wird für jede neu hinzugefügten Verfeinerungsschritt ein Stutter-Vorgang eingeführt, der vom verfeinerten Modell aufgeführt wird. Dadurch können Stutter-Vorgänge der gröberen Modelle entfernt und an die nächsthöhere Ebene ausgelagert werden.
@@ -305,7 +307,7 @@ tuerFrame:
 ```alloy
 all t: TUER - tuer | t.offen = False implies t.offen' = False 
 ```
-
+Den Zustand der Türen wurde modelliert, indem die Türen initial geschlossen sind und nur durch Bewohner geöffnet werden können. Durch die Frame-Condition haben wir sichergestellt, dass geschlossene Türen geschlossen bleiben. Für das Zufallen der Tür haben wir keinen expliziten Zustandsübergang definiert, sodass deren Folgezustand durch das Modell nicht festgelegt ist und die Tür entsprechend nach einem beliebigen Zeitraum zufallen kann. In weiteren Verfeinerungsschritten könnte man auch eine explizite Verriegelung der Tür definieren, sofern eine authentifizierte Person in den Raum eingetreten ist.
 
 ## Zusammengefasste Ablaufschritte der zweiten Verfeinerung
 
