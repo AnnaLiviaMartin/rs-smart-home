@@ -10,23 +10,20 @@ Das grobe Modell beschreibt nur den direkten Wechsel einer Person zwischen zwei 
 
 ## Objekte und Beziehungen
 - Es gibt Orte, in denen sich Personen aufhalten können.
-- Orte unterteilen sich in Räume und Türen.
-- Räume unterteilen sich in Gärten und Zimmer.
+- Orte unterteilen sich in Garten, Räume und Türen.
 - Alle Räume sind über Türen miteinander Verbunden
 - Räume und Türen können über Nachbarschaftsbeziehungen miteinander verbunden sein.
 - Nachbarschaftsbeziehungen sind symmetrisch.
 - Eine Person kann sich in genau einem Raum aufhalten
 - Alle Personen befinden initial im Garten
 - Es existiert genau ein Garten
-- Alle Nachbarschaftsbeziehungen der Räume und Türen sind symmetrisch
-- Alle Räume haben Türen als Nachbarn und Türen haben nur Räume als Nachbarn
 - Jede Tür kann geöffnet oder geschlossen sein.
 
 ## Systemgarantien
 - Eine Person kann nicht gleichzeitig mehreren Räumen zugeordnet sein.
-- Eine Tür verbindet genau zwei verschiedene Räume.
-- Eine Tür kann nicht direkt mit einer anderen Tür verbunden sein.
+- Eine Tür verbindet genau zwei verschiedene Räume. (Eine Tür kann nicht direkt mit einer anderen Tür verbunden sein)
 - Bewegungen zwischen nicht verbundenen Räumen sind nicht möglich.
+- Dieselbe Person ist sowohl im feinen als auch im groben Modell vertreten
 
 ## Ereignis `bewege`
 Eine Person kann direkt von einem Raum in einen anderen wechseln, wenn:
@@ -64,7 +61,7 @@ Eine Person kann eine Tür verlassen, wenn:
 
 ## Objekte und Beziehungen
 
-- Jede Tür besitzt genau ein Authentifizierungsgerät.
+- Jede Tür besitzt genau ein Authentifizierungsgerät. 
 - Es gibt zwei Personentypen: Bewohner:innen und Gäste.
 - Bewohner:innen besitzen eine dauerhafte Berechtigung zum Öffnen geschlossener Türen.
 - Gäste besitzen keine dauerhafte Berechtigung zum Öffnen geschlossener Türen.
