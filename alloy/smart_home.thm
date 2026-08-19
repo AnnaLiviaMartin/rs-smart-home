@@ -8,26 +8,29 @@
 <defaultedge/>
 
 <node>
-   <type name="AUTHENTICATION"/>
+   <type name="BEWOHNER"/>
+   <type name="False"/>
    <type name="GARTEN"/>
-   <type name="Int"/>
-   <type name="PERSON"/>
+   <type name="GAST"/>
+   <type name="ORT"/>
    <type name="RAUM"/>
    <type name="String"/>
+   <type name="True"/>
    <type name="TUER"/>
    <type name="univ"/>
-   <type name="ZIMMER"/>
    <type name="seq/Int"/>
 </node>
 
-<edge style="inherit" visible="no" attribute="yes">
-   <relation name="personenImRaum"> <type name="RAUM"/> <type name="PERSON"/> </relation>
-</edge>
+<node visible="no">
+   <type name="Bool"/>
+   <type name="Int"/>
+   <type name="PERSON"/>
+</node>
 
 <edge visible="no" attribute="yes">
-   <relation name="authentication"> <type name="ZIMMER"/> <type name="AUTHENTICATION"/> </relation>
-   <relation name="authentifiziertePersonen"> <type name="AUTHENTICATION"/> <type name="PERSON"/> </relation>
-   <relation name="id"> <type name="RAUM"/> <type name="Int"/> </relation>
+   <relation name="offen"> <type name="TUER"/> <type name="Bool"/> </relation>
+   <relation name="personenImOrtFein"> <type name="ORT"/> <type name="PERSON"/> </relation>
+   <relation name="personenImOrtGrob"> <type name="ORT"/> <type name="PERSON"/> </relation>
 </edge>
 
 </view>
