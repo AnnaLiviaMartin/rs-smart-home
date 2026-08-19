@@ -359,7 +359,7 @@ Wir haben uns daher entschieden bei unseren Objekten in zwei Kategorien zu unter
 - Objekte, die eine statische Struktur wiederspiegeln
 - und Objekte, die zeitabhängig sind und ihren Inhalt verändern können.
 
-Teil der statischen Struktur sind damit alle Räume und Türen, da diese ihren Standort nicht ändern. Teil der zeitabhängigen Inhalte sind alle Objekte, deren Inhalte sich verändern, z.b. die Belegung der Räume, der letzte Raum der Personen und ob eine Tür gerade offen oder geschlossen ist.
+Teil der statischen Struktur sind damit alle Räume und Türen, da diese ihren Standort nicht ändern. Teil der zeitabhängigen Inhalte sind alle Objekte, deren Inhalte sich verändern, wie die Belegung der Räume und ob eine Tür gerade offen oder geschlossen ist.
 
 ### Umsetzung der statischen Struktur
 
@@ -374,7 +374,6 @@ Für die wiederkehrenden Datentypen `OrtSet`, `TuerSet`, `RaumSet` und `PersonSe
 Durch diese Definitionen ergeben sich bereits mehrere Eigenschaften implizit, ohne dass wir sie gesondert beweisen mussten:
 
 - Der Öffnungszustand einer Tür besitzt immer genau einen Wahrheitswert, da `offen : OrtSet orte → Bool` bereits als totale Funktion nach `Bool` definiert ist.
-- Der letzte Raum einer Person ist entweder ein Raum oder nicht gesetzt, da `letzterRaum : Person → Option Raum` bereits genau diese beiden Fälle abbildet.
 - Jede Person ist entweder Bewohner:in oder Gast, da dies durch den induktiven Datentyp `Person` mit seinen beiden Konstruktoren bereits erschöpfend festgelegt ist.
 - Räume und Türen sind stets unterscheidbare Orte, da `Ort.Raum` und `Ort.Tuer` getrennte Konstruktoren desselben induktiven Typs `Ort` sind.
 - Nachbarschaftssymmetrie und Schleifenfreiheit sind, wie oben beschrieben, bereits Bestandteil von `SimpleGraph`.
@@ -383,13 +382,13 @@ Diese Eigenschaften mussten wir also nicht zusätzlich als eigene Sätze formuli
 
 ### Umsetzung der veränderlichen Struktur (Zuständen) 
 
-Für die veränderlichen Anteile des Modells hätten wir prinzipiell auch ohne einen eigenen `Zustand`-Typ arbeiten können, indem wir Belegung, Öffnungszustand und letzten Raum als lose nebeneinanderstehende Listen beziehungsweise Funktionen durch die Beweise reichen. Wir haben uns stattdessen für eine gemeinsame Struktur `Zustand` entschieden, da sich damit an einer Stelle festlegen lässt, welche Grundeigenschaften ein `Zustand` immer erfüllen muss. Ein `Zustand` lässt sich in Lean gar nicht erst anlegen, wenn diese Eigenschaften nicht erfüllt sind, denn sie sind Teil der Struktur selbst und nicht nur nachträglich behauptete Aussagen über sie.
+Für die veränderlichen Anteile des Modells hätten wir prinzipiell auch ohne einen eigenen `Zustand`-Typ arbeiten können, indem wir Belegung und Öffnungszustand als lose nebeneinanderstehende Listen beziehungsweise Funktionen durch die Beweise reichen. Wir haben uns stattdessen für eine gemeinsame Struktur `Zustand` entschieden, da sich damit an einer Stelle festlegen lässt, welche Grundeigenschaften ein `Zustand` immer erfüllen muss. Ein `Zustand` lässt sich in Lean gar nicht erst anlegen, wenn diese Eigenschaften nicht erfüllt sind, denn sie sind Teil der Struktur selbst und nicht nur nachträglich behauptete Aussagen über sie.
 
 Dadurch verschiebt sich die eigentliche Beweislast von der Konstruktion in die Veränderung: Statt bei jeder Verwendung eines Zustands erneut zeigen zu müssen, dass er sinnvoll ist, muss nur noch bei jedem Übergang gezeigt werden, dass der neue `Zustand` die Invarianten weiterhin erfüllt. Diese Invarianten haben wir bewusst nicht als freistehende `axiom`-Deklarationen formuliert, sondern als Felder der Struktur beziehungsweise als zu beweisende Eigenschaften über unserem Beispielgebäude (siehe Beispiel.lean). Ein axiom würde Lean lediglich mitteilen, die Aussage ungeprüft zu akzeptieren, für uns war hingegen wichtig, tatsächlich zu zeigen, dass sich mit unseren Definitionen überhaupt ein `Zustand` konstruieren lässt, der allen Anforderungen genügt, und nicht nur, dass wir uns die entsprechende Eigenschaft wünschen.
 
 Für die wiederkehrenden Typen `OrtSet`, `TuerSet`, `RaumSet` und `PersonSet` haben wir jeweils `abbrev` definiert. Dadurch legt Lean die zulässigen Typen an vielen Stellen automatisch fest, ohne dass wir die Zugehörigkeit jedes Mal erneut von Hand mitführen müssen.
 
-Ein Grundproblem bei der Modellierung veränderlicher Daten in Lean ist, dass es keine Variablen im klassischen Sinn gibt: Ein Wert lässt sich nicht "an Ort und Stelle" verändern, jede Änderung erzeugt formal ein neues, unabhängiges Objekt. Hätten wir die Belegung eines Ortes direkt als Bestandteil des Gebäudegraphen modelliert, etwa als Eigenschaft der Knoten selbst, so hätte jede Bewegung einer einzigen Person einen vollständig neuen Graphen erzeugt, dessen statische Eigenschaften wir jedes Mal erneut hätten nachweisen müssen. Aus diesem Grund trennen wir strikt zwischen der statischen Struktur (dem `GebaeudePlan` beziehungsweise `BipartiteOrtGraph`, der über die gesamte Modellierung hinweg unverändert bleibt) und den veränderlichen Inhalten (`Belegung_safe`, `offen`, `letzterRaum`), die wir als eigene, vom Graphen unabhängige Abbildungen in `Zustand` führen. Eine Bewegung verändert damit ausschließlich diese Abbildungen und erzeugt einen neuen `Zustand`. Der zugrunde liegende Gebäudeplan bleibt über alle Schritte hinweg derselbe Wert und muss nicht erneut bewiesen werden.
+Ein Grundproblem bei der Modellierung veränderlicher Daten in Lean ist, dass es keine Variablen im klassischen Sinn gibt: Ein Wert lässt sich nicht "an Ort und Stelle" verändern, jede Änderung erzeugt formal ein neues, unabhängiges Objekt. Hätten wir die Belegung eines Ortes direkt als Bestandteil des Gebäudegraphen modelliert, etwa als Eigenschaft der Knoten selbst, so hätte jede Bewegung einer einzigen Person einen vollständig neuen Graphen erzeugt, dessen statische Eigenschaften wir jedes Mal erneut hätten nachweisen müssen. Aus diesem Grund trennen wir strikt zwischen der statischen Struktur (dem `GebaeudePlan` beziehungsweise `BipartiteOrtGraph`, der über die gesamte Modellierung hinweg unverändert bleibt) und den veränderlichen Inhalten (`Belegung_safe`, `offen`), die wir als eigene, vom Graphen unabhängige Abbildungen in `Zustand` führen. Eine Bewegung verändert damit ausschließlich diese Abbildungen und erzeugt einen neuen `Zustand`. Der zugrunde liegende Gebäudeplan bleibt über alle Schritte hinweg derselbe Wert und muss nicht erneut bewiesen werden.
 
 Der Öffnungszustand einer Tür wird in unserem Modell nur explizit durch das Ereignis `oeffneTuer` verändert, und zwar ausschließlich vom geschlossenen in den geöffneten `Zustand`. Das entspricht der fachlichen Anforderung aus der Spezifikation, dass eine Authentifizierung niemals Türen schließt, sondern nur öffnet. Das eigenständige Zufallen einer geöffneten Tür nach einer beliebigen Zeit haben wir hingegen nicht als eigenes Lean-Ereignis modelliert, sondern offengelassen. Die Spezifikation macht dazu selbst keine Aussage darüber, wann genau dies geschieht, sondern nur, dass es irgendwann geschieht. Ein solches "irgendwann" haben wir daher über Lean nicht bewiesen.
 
@@ -428,7 +427,7 @@ theorem moveGrob_person_nicht_in_von {orte : Finset Ort} (G : BipartiteOrtGraph 
     pre_moveGrobMitTuer G offen p von nach b → p ∉ personenImOrt (verschiebePerson p (raumAlsOrt von) (raumAlsOrt nach) b) (raumAlsOrt von) := by
 ```
 
-Ein solcher Beweis betrachtet ausschließlich die Belegung: Die Person war vorher im Ausgangsraum, Ausgangs- und Zielraum sind verschieden, und nach der Aktion ist die Person dort nicht mehr enthalten. Weder der übrige `Zustand` noch `offen`, `letzterRaum` oder die restlichen Invarianten spielen dabei eine Rolle. Dadurch bleibt der Beweis einfach, unabhängig vom restlichen Modell wiederverwendbar und leicht auf ähnliche Aktionen übertragbar.
+Ein solcher Beweis betrachtet ausschließlich die Belegung: Die Person war vorher im Ausgangsraum, Ausgangs- und Zielraum sind verschieden, und nach der Aktion ist die Person dort nicht mehr enthalten. Weder der übrige `Zustand` noch `offen` oder die restlichen Invarianten spielen dabei eine Rolle. Dadurch bleibt der Beweis einfach, unabhängig vom restlichen Modell wiederverwendbar und leicht auf ähnliche Aktionen übertragbar.
 
 Auf der Zustandsebene übertragen wir diese Eigenschaft dann auf einen vollständigen Übergang zwischen zwei Zuständen:
 
@@ -437,7 +436,7 @@ theorem moveGrobSchrittZustand_person_nicht_in_von {orte : Finset Ort} {personen
     moveGrobSchrittZustand G p von nach Z Z' → p ∉ personenImOrt Z'.belegungGrob (raumAlsOrt von) := by
 ```
 
-Die beiden Ebenen beantworten unterschiedliche Fragen: Die Belegungsebene beschreibt, was eine Aktion mit einer Belegung macht, unabhängig davon, wie diese Belegung eingebettet ist. Die Zustandsebene beschreibt, wie sich diese Änderung in einen vollständigen, invariantenerhaltenden Systemschritt einfügt, und ist dafür notwendig, sobald Aussagen über offene Türen, den letzten Raum oder das Zusammenspiel von grober und feiner Belegung getroffen werden sollen. Eine reine Belegungsaussage würde für solche Fragen nicht ausreichen und eine reine Zustandsaussage würde umgekehrt für einfache Aussagen wie die obige unnötig viele, für die eigentliche Aussage irrelevante Zustandsfelder mitschleppen. Wir haben uns daher durchgehend dafür entschieden, zunächst die grundlegende Eigenschaft auf der jeweils einfachsten Ebene zu zeigen und sie anschließend in den vollständigen Zustandsübergang zu heben.
+Die beiden Ebenen beantworten unterschiedliche Fragen: Die Belegungsebene beschreibt, was eine Aktion mit einer Belegung macht, unabhängig davon, wie diese Belegung eingebettet ist. Die Zustandsebene beschreibt, wie sich diese Änderung in einen vollständigen, invariantenerhaltenden Systemschritt einfügt, und ist dafür notwendig, sobald Aussagen über offene Türen oder das Zusammenspiel von grober und feiner Belegung getroffen werden sollen. Eine reine Belegungsaussage würde für solche Fragen nicht ausreichen und eine reine Zustandsaussage würde umgekehrt für einfache Aussagen wie die obige unnötig viele, für die eigentliche Aussage irrelevante Zustandsfelder mitschleppen. Wir haben uns daher durchgehend dafür entschieden, zunächst die grundlegende Eigenschaft auf der jeweils einfachsten Ebene zu zeigen und sie anschließend in den vollständigen Zustandsübergang zu heben.
 
 ### Umgesetzte Beweise
 
@@ -481,7 +480,6 @@ Die in Lean umgesetzten Beweise umfassen:
 - Person befindet sich danach im Zielraum.
 - Der grobe Schritt stimmt mit dem Ergebnis des feinen Schritts überein.
 - Andere Personen bleiben unverändert.
-- letzterRaum wird korrekt aktualisiert. -> erst nach verlasseTuer ist der letzteRaum neu gesetzt worden, nicht schon bei betreteTuer
 - Die Verfeinerungsrelation bleibt nach Aktionen erhalten.
 
 **Türöffnung**
