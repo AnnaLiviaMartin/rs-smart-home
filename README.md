@@ -15,7 +15,7 @@ Die Dokumentation ist auf mehrere Dateien verteilt. Diese README.md dient als Ei
 
 ### Fachliche Idee und Motivation
 
-Die Motivation, die fachliche Problemstellung und die Herleitung des Modells befinden sich in der [Idee.md](docs/Idee.md)
+Die Motivation, die fachliche Problemstellung und die Herleitung des Modells befinden sich in der [Dokumentation.md](docs/DOKUMENTATION.md)
 
 Dieses Dokument beschreibt unter anderem:
 
@@ -43,7 +43,7 @@ Behandelt werden unter anderem:
 
 ### Umsetzungsentscheidungen
 
-Die Beschreibung der konkreten Modellierungs- und Implementierungsentscheidungen befindet sich in [Idee.md](docs/Idee.md)
+Die Beschreibung der konkreten Modellierungs- und Implementierungsentscheidungen befindet sich in [Dokumentation.md](docs/DOKUMENTATION.md)
 
 Dort wird erklärt, wie die fachlichen Anforderungen in Alloy und Lean umgesetzt wurden.
 
@@ -57,7 +57,7 @@ project/
 ├── README.md
 │
 ├── docs/
-│   ├── Idee.md
+│   ├── Dokumentation.md
 │   ├── Model_Spezifikation.md
 │   ├── Umsetzung.md
 │   └── diagrams/
