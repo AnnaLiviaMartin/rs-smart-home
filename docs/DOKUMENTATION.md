@@ -440,6 +440,18 @@ theorem moveGrobSchrittZustand_person_nicht_in_von {orte : Finset Ort} {personen
 
 Die beiden Ebenen beantworten unterschiedliche Fragen: Die Belegungsebene beschreibt, was eine Aktion mit einer Belegung macht, unabhängig davon, wie diese Belegung eingebettet ist. Die Zustandsebene beschreibt, wie sich diese Änderung in einen vollständigen, invariantenerhaltenden Systemschritt einfügt, und ist dafür notwendig, sobald Aussagen über offene Türen oder das Zusammenspiel von grober und feiner Belegung getroffen werden sollen. Eine reine Belegungsaussage würde für solche Fragen nicht ausreichen und eine reine Zustandsaussage würde umgekehrt für einfache Aussagen wie die obige unnötig viele, für die eigentliche Aussage irrelevante Zustandsfelder mitschleppen. Wir haben uns daher durchgehend dafür entschieden, zunächst die grundlegende Eigenschaft auf der jeweils einfachsten Ebene zu zeigen und sie anschließend in den vollständigen Zustandsübergang zu heben.
 
+## Nicht modellierte und nicht bewiesene Eigenschaften
+
+Das entwickelte Modell bildet die zentralen Bewegungs- und Zugangsregeln des Systems ab. Einige Aspekte wurden jedoch bewusst nicht modelliert oder nicht formal bewiesen. Dadurch bleibt das Modell überschaubar und kann sich auf die für die Arbeit wesentlichen Verfeinerungsschritte konzentrieren.
+
+Das automatische Schließen von Türen wurde nicht modelliert. Eine genauere Modellierung würde zusätzliche Zeitinformationen oder eine Folge von Zuständen erfordern, in denen die vergangene Zeit beziehungsweise die Dauer des Offenstehens einer Tür verwaltet wird. Da diese Informationen für die untersuchten Bewegungs- und Authentifizierungsvorgänge nicht notwendig sind, wurde das automatische Schließen der Türen nicht umgesetzt.
+
+Auch die Anfangszustände des Systems wurden nicht formal festgelegt. Insbesondere wurde nicht modelliert, dass zu Beginn alle Türen geschlossen sind und sich alle Personen im Garten befinden. Diese Annahmen werden im Beispiel und in den Abbildungen verwendet, sind jedoch nicht Bestandteil jedes möglichen Systemzustands. Auch für diese wäre sonst eine Art der Zeitmodellierung nötig gewesen, um einen festen Startzeitpunkt bestimmen zu können. Das Modell kann daher auch mit anderen gültigen Anfangszuständen betrachtet werden.
+
+Ein eigenständiges Authentifizierungsobjekt wird nicht benötigt. Die fachliche Funktion der Authentifizierung kann direkt durch die Prüfung umgesetzt werden, ob eine Person Bewohner:in oder Gast ist. Ein separates Authentifizierungsgerät wurde lediglich in den grafischen Darstellungen verwendet, um den Vorgang anschaulicher zu machen.
+
+Darüber hinaus wurde nicht bewiesen, dass alle denkbaren Anforderungen eines realen Zugangskontrollsystems erfüllt sind. Das Modell betrachtet insbesondere die Bewegungen einzelner Personen und die Öffnung von Türen durch Bewohner:innen. Aspekte wie parallele Bewegungen mehrerer Personen, zeitabhängige Berechtigungen, unterschiedliche Berechtigungsstufen, verlorene oder ungültige Transponder sowie die Protokollierung von Zutritten sind nicht Bestandteil der aktuellen Modellierung.
+
 ### Umgesetzte Beweise
 
 Die in Lean umgesetzten Beweise umfassen:
